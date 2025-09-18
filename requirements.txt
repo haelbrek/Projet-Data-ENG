@@ -1,0 +1,12 @@
+# Prérequis (outils, pas des packages Python)
+#
+# Installez ces outils sur votre machine pour déployer l’infrastructure.
+# Les versions indiquées sont celles testées avec ce projet.
+
+terraform>=1.1.7   # Infrastructure as Code
+azure-cli>=2.52.0  # Authentification et gestion Azure (az login)
+
+# Les providers Terraform sont gérés automatiquement par `terraform init`.
+# - hashicorp/azurerm = 3.46.0
+# - hashicorp/random  ~> 3.6
+

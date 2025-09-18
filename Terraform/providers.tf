@@ -7,10 +7,11 @@ terraform {
       version = "3.46.0"
     }
   }
-  
 }
 
-
+# Provider Azure Resource Manager
 provider "azurerm" {
   features {}
 }
+
+# Aucun autre provider requis
