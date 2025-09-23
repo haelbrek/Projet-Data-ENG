@@ -1,4 +1,4 @@
-# Architecture Azure Storage
+﻿# Architecture Azure Storage
 
 Ce document complete le README et decrit l infrastructure fournie par Terraform pour le projet "Projet-Data-ENG".
 
@@ -81,3 +81,20 @@ terraform destroy
 - Ajout de diagnostics et de metrics sur les comptes de stockage
 - Automatisation des pipelines Data Factory et integration CI/CD Terraform
 - Attribution des roles Storage (Blob Data Contributor) aux identites consommatrices
+
+## Scripts d ingestion
+
+- `ingestion/fetch_communes.py` : interroge une API de communes (par defaut `geo.api.gouv.fr`), agrege les donnees par departement (Hauts-de-France par defaut), extrait coordonnees/attributs, puis charge un JSON unique dans Azure Blob Storage. Options pour personnaliser les departements, fournir une cle API et choisir le chemin de sortie.
+
+
+
+
+
+## Notes d execution et de depannage
+
+- Provisionnement via Terraform : 	erraform init && terraform apply dans Terraform/.
+- Execution ingestion : python ingestion/fetch_communes.py --connection-string "DefaultEndpointsProtocol=..." --departements 02 59 60 62 80 --container landing (option --local-output pour conserver une copie).
+- Erreurs rencontrees :
+  - Connection string is either blank or malformed -> variable non definie : recuperer la chaine avec 	erraform output -raw blob_primary_connection_string et la passer a la commande ou exporter AZURE_STORAGE_CONNECTION_STRING.
+  - AuthenticationFailed ... string to sign -> terminal non relance apres setx : rouvrir la session ou passer la chaine directement via --connection-string.
+  - can't open file ... terraform\ingestion\fetch_communes.py -> chemin incorrect : lancer la commande depuis la racine du projet (D:\data eng\Projet-Data-ENG).
