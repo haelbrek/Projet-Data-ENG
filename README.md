@@ -9,6 +9,8 @@ Infrastructure-as-Code (Terraform) et scripts d ingestion pour provisionner un s
 - Compte ADLS Gen2 (HNS actif) avec filesystems `raw`, `staging`, `curated`
 - Azure Key Vault (Access Policies, purge protection)
 - Azure Data Factory avec identite system-assigned
+- Reseau virtuel avec sous-reseaux dedies Databricks (private/public + NSG)
+- Workspace Azure Databricks en mode VNet injection
 - Upload local optionnel des fichiers CSV via Terraform
 
 Documentation detaillee : `docs/architecture.md`.
@@ -48,6 +50,8 @@ Parametres principaux (`Terraform/terraform.tfvars` non versionne) :
 - `key_vault_name`
 - `data_factory_name`
 - `kv_additional_reader_object_ids`
+- Variables reseau Databricks (`vnet_name`, `vnet_address_space`, `databricks_*_subnet_*`)
+- `databricks_workspace_name`
 - Variables d upload optionnel (`upload_files_enabled`, `upload_source_dir`, `upload_container_name`)
 
 Les comptes de stockage doivent respecter : minuscules, chiffres, 3-24 caracteres, nom globalement unique.
@@ -122,7 +126,24 @@ python ingestion/fetch_communes.py \
   --local-output data/communes.json
 ```
 
-## 6. Arborescence
+## 6. Workspace Databricks (VNet injection)
+
+Terraform cree :
+- un reseau virtuel (`virtual_network_name`) et deux sous-reseaux dedies (`databricks_private_subnet_id`, `databricks_public_subnet_id`)
+- deux Network Security Groups associes pour controler les flux (lances automatiques)
+- un workspace Azure Databricks (`databricks_workspace_name`) deja rattache au VNet
+
+Apres `terraform apply`, recupere les informations utiles :
+```bash
+cd Terraform
+terraform output databricks_workspace_url
+terraform output databricks_private_subnet_id
+terraform output databricks_public_subnet_id
+cd ..
+```
+Le workspace est pret a recevoir des clusters (mode VNet-injected). Les NSG permettent les communications intra-VNet et la sortie internet. Adapte les regles si ta politique de securite l exige.
+
+## 7. Arborescence
 
 ```
 Terraform/
@@ -144,20 +165,20 @@ README.md
 
 Astuce : generer un `Terraform/terraform.tfvars.example` pour partager un gabarit sans secrets.
 
-## 7. Nettoyage
+## 8. Nettoyage
 
 ```bash
 cd Terraform
 terraform destroy
 ```
 
-## 8. Depannage rapide
+## 9. Depannage rapide
 
 - `az login` derriere proxy interceptant TLS : importer le certificat et fixer `REQUESTS_CA_BUNDLE`
 - Noms comptes stockage rejetes : respecter le format (lowercase, 3-24, unique)
 - Upload Terraform ignore : verifier `upload_files_enabled` et l extension `.csv`
 
-## 9. Publier sur GitHub
+## 10. Publier sur GitHub
 
 ```bash
 git init
@@ -169,7 +190,7 @@ git push -u origin main
 
 Ne pas versionner `uploads/` pour eviter toute fuite de donnees.
 
-## 10. Ressources complementaires
+## 11. Ressources complementaires
 
 - `docs/architecture.md`
 - Terraform provider AzureRM : https://registry.terraform.io/providers/hashicorp/azurerm/latest

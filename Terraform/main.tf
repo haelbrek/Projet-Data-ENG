@@ -4,12 +4,165 @@ resource "azurerm_resource_group" "rg" {
 }
 
 ############################################
-# Stockage : Blob (landing) et ADLS Gen2   
+# Reseau virtuel pour Databricks
 ############################################
 
+resource "azurerm_virtual_network" "data" {
+  name                = var.vnet_name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  address_space       = [var.vnet_address_space]
 
+  tags = {
+    env     = "demo"
+    purpose = "network"
+  }
+}
 
-# Compte de stockage Blob pour la zone "landing" (sans HNS)
+resource "azurerm_subnet" "databricks_private" {
+  name                 = var.databricks_private_subnet_name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.data.name
+  address_prefixes     = [var.databricks_private_subnet_prefix]
+  service_endpoints    = ["Microsoft.Storage", "Microsoft.Sql"]
+
+  delegation {
+    name = "databricks_private"
+
+    service_delegation {
+      name = "Microsoft.Databricks/workspaces"
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action",
+        "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
+      ]
+    }
+  }
+}
+
+resource "azurerm_subnet" "databricks_public" {
+  name                 = var.databricks_public_subnet_name
+  resource_group_name  = azurerm_resource_group.rg.name
+  virtual_network_name = azurerm_virtual_network.data.name
+  address_prefixes     = [var.databricks_public_subnet_prefix]
+  service_endpoints    = ["Microsoft.Storage", "Microsoft.Sql"]
+
+  delegation {
+    name = "databricks_public"
+
+    service_delegation {
+      name = "Microsoft.Databricks/workspaces"
+      actions = [
+        "Microsoft.Network/virtualNetworks/subnets/join/action",
+        "Microsoft.Network/virtualNetworks/subnets/prepareNetworkPolicies/action"
+      ]
+    }
+  }
+}
+
+resource "azurerm_network_security_group" "databricks_private" {
+  name                = "nsg-${var.databricks_private_subnet_name}"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  security_rule {
+    name                       = "allow-vnet-inbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "allow-all-outbound"
+    priority                   = 101
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = {
+    env     = "demo"
+    purpose = "databricks"
+  }
+}
+
+resource "azurerm_network_security_group" "databricks_public" {
+  name                = "nsg-${var.databricks_public_subnet_name}"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+
+  security_rule {
+    name                       = "allow-vnet-inbound"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "allow-all-outbound"
+    priority                   = 101
+    direction                  = "Outbound"
+    access                     = "Allow"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = {
+    env     = "demo"
+    purpose = "databricks"
+  }
+}
+
+resource "azurerm_subnet_network_security_group_association" "databricks_private" {
+  subnet_id                 = azurerm_subnet.databricks_private.id
+  network_security_group_id = azurerm_network_security_group.databricks_private.id
+}
+
+resource "azurerm_subnet_network_security_group_association" "databricks_public" {
+  subnet_id                 = azurerm_subnet.databricks_public.id
+  network_security_group_id = azurerm_network_security_group.databricks_public.id
+}
+
+resource "azurerm_databricks_workspace" "dbw" {
+  name                = var.databricks_workspace_name
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  sku                 = "standard"
+
+  custom_parameters {
+    virtual_network_id                                   = azurerm_virtual_network.data.id
+    public_subnet_name                                   = azurerm_subnet.databricks_public.name
+    private_subnet_name                                  = azurerm_subnet.databricks_private.name
+    public_subnet_network_security_group_association_id  = azurerm_subnet_network_security_group_association.databricks_public.id
+    private_subnet_network_security_group_association_id = azurerm_subnet_network_security_group_association.databricks_private.id
+  }
+
+  tags = {
+    env     = "demo"
+    purpose = "databricks"
+  }
+}
+
+############################################
+# Stockage : Blob (landing) et ADLS Gen2
+############################################
+
 resource "azurerm_storage_account" "blob" {
   name                      = var.blob_storage_account_name
   resource_group_name       = azurerm_resource_group.rg.name
@@ -31,7 +184,6 @@ resource "azurerm_storage_container" "landing" {
   container_access_type = "private"
 }
 
-# Compte de stockage ADLS Gen2 pour le Data Lake (HNS activé)
 resource "azurerm_storage_account" "datalake" {
   name                      = var.datalake_storage_account_name
   resource_group_name       = azurerm_resource_group.rg.name
@@ -67,7 +219,7 @@ locals {
 
 resource "azurerm_storage_blob" "uploaded" {
   for_each               = toset(local.upload_files)
-  name                   = each.value # préserve la structure de sous-dossiers
+  name                   = each.value
   storage_account_name   = azurerm_storage_account.blob.name
   storage_container_name = azurerm_storage_container.landing[var.upload_container_name].name
   type                   = "Block"
@@ -88,14 +240,10 @@ resource "azurerm_key_vault" "kv" {
   tenant_id           = data.azurerm_client_config.current.tenant_id
   sku_name            = "standard"
 
-  # Modèle Access Policies (RBAC désactivé)
-  enable_rbac_authorization = false
-
-  # Sécurité/rétention
+  enable_rbac_authorization  = false
   purge_protection_enabled   = true
   soft_delete_retention_days = 90
 
-  # Accès pour le déployeur courant (secrets)
   access_policy {
     tenant_id = data.azurerm_client_config.current.tenant_id
     object_id = data.azurerm_client_config.current.object_id
@@ -104,7 +252,6 @@ resource "azurerm_key_vault" "kv" {
     ]
   }
 
-  # Accès lecture secrets pour identités additionnelles (optionnel)
   dynamic "access_policy" {
     for_each = toset(var.kv_additional_reader_object_ids)
     content {
@@ -139,7 +286,6 @@ resource "azurerm_data_factory" "adf" {
   }
 }
 
-# Donne à l'identité managée de Data Factory un accès lecture aux secrets du Key Vault
 resource "azurerm_key_vault_access_policy" "kv_adf_reader" {
   key_vault_id = azurerm_key_vault.kv.id
   tenant_id    = data.azurerm_client_config.current.tenant_id
@@ -148,4 +294,3 @@ resource "azurerm_key_vault_access_policy" "kv_adf_reader" {
   secret_permissions = ["Get", "List"]
   depends_on         = [azurerm_data_factory.adf]
 }
-
