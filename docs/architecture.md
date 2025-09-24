@@ -4,47 +4,49 @@ Ce document complete le README et decrit l infrastructure fournie par Terraform 
 
 ## Apercu fonctionnel
 
-L infrastructure vise a fournir un socle de stockage pour un projet data analytique:
-- un compte de stockage "landing" pour recevoir les extractions brutes;
-- un compte Azure Data Lake Storage Gen2 avec hierarchie HNS pour les zones `raw`, `staging`, `curated`;
-- un Azure Key Vault pour proteger les secrets operationnels;
-- un Azure Data Factory avec identite managee system-assigned pour orchestrer de futurs pipelines;
-- un mecanisme optionnel d upload local de fichiers CSV directement dans le conteneur Blob "landing".
+- Compte Blob "landing" pour recevoir les donnees brutes
+- Compte Azure Data Lake Storage Gen2 (zones `raw`, `staging`, `curated`)
+- Azure Key Vault (Access Policies, purge protection)
+- Azure Data Factory (identite system-assigned)
+- Upload local optionnel de fichiers CSV via Terraform
 
 ## Ressources provisionnees
 
 | Ressource | Definition Terraform | Points clefs |
 |-----------|----------------------|--------------|
-| Resource group | `azurerm_resource_group.rg` | Regroupe toutes les ressources dans la region definie par `var.resource_group_location`. |
-| Storage Account landing | `azurerm_storage_account.blob` | Compte Standard LRS, HTTPS only, TLS1_2. Concu sans HNS pour un usage Blob classique. |
-| Conteneurs landing | `azurerm_storage_container.landing` | Liste definie par `var.blob_containers`. Chaque conteneur est prive. |
-| Data Lake (ADLS Gen2) | `azurerm_storage_account.datalake` | HNS active pour disposer d un namespace hierarchique. Stockage Standard LRS. |
-| Filesystems ADLS | `azurerm_storage_data_lake_gen2_filesystem.zones` | Filesystems `raw`, `staging`, `curated` par defaut. |
-| Key Vault | `azurerm_key_vault.kv` | Mode Access Policies, purge protection et soft delete 90 jours. Une policy donne acces complet aux secrets pour le deployeeur. |
-| Data Factory | `azurerm_data_factory.adf` | Identite system-assigned. `azurerm_key_vault_access_policy.kv_adf_reader` autorise Get/List sur les secrets. |
-| Upload local optionnel | `azurerm_storage_blob.uploaded` | Parcourt `local.upload_files` et cree un blob Block pour chaque fichier CSV detecte localement. |
+| Resource group | `azurerm_resource_group.rg` | Region definie par `var.resource_group_location` |
+| Storage Account landing | `azurerm_storage_account.blob` | Standard LRS, HTTPS only, TLS1_2 |
+| Conteneurs landing | `azurerm_storage_container.landing` | Liste `var.blob_containers`, acces prive |
+| Data Lake (ADLS Gen2) | `azurerm_storage_account.datalake` | HNS actif, Standard LRS |
+| Filesystems ADLS | `azurerm_storage_data_lake_gen2_filesystem.zones` | `raw`, `staging`, `curated` |
+| Key Vault | `azurerm_key_vault.kv` | Access Policies, purge protection 90 jours |
+| Data Factory | `azurerm_data_factory.adf` | Identite managée, taggee `orchestration` |
+| Upload local optionnel | `azurerm_storage_blob.uploaded` | Un blob Block par fichier local detecte |
 
 ## Variables principales
 
-Les valeurs se parametrent via `Terraform/terraform.tfvars` (non committe). Variables clefs:
+A definir dans `Terraform/terraform.tfvars` :
 - `resource_group_name`, `resource_group_location`
 - `blob_storage_account_name`, `datalake_storage_account_name`
 - `blob_containers`, `datalake_filesystems`
 - `key_vault_name`, `kv_additional_reader_object_ids`
 - `data_factory_name`
-- Upload optionnel: `upload_files_enabled`, `upload_source_dir`, `upload_container_name`
+- Upload optionnel : `upload_files_enabled`, `upload_source_dir`, `upload_container_name`
 
-## Upload local vers Blob
+## Upload local via Terraform
 
-Lorsque `upload_files_enabled = true`, Terraform calcule `local.upload_files` a partir du dossier configure. Le filtrage conserve uniquement les fichiers dont le nom termine par `.csv` (regex insensible a la casse). Chaque fichier est cree dans le conteneur Blob cible avec le meme chemin virtuel que sur disque. Le checksum MD5 detecte les modifications.
+`local.upload_files` est calcule depuis `upload_source_dir` lorsque `upload_files_enabled = true`.
+- Seuls les fichiers terminant par `.csv` sont retains (regex insensible a la casse)
+- Le chemin virtuel du blob respecte l arborescence locale
+- Un MD5 est calcule pour detecter les changements
 
-Bonnes pratiques:
-- ne versionner aucune donnee dans `uploads/` (le dossier est ignore par Git)
-- structurer en sous-dossiers si necessaire (`csv/source/date=YYYY-MM-DD/fichier.csv`)
+Bonnes pratiques :
+- Ne pas versionner `uploads/`
+- Organiser les sous-dossiers (`csv/source/date=YYYY-MM-DD/fichier.csv`)
 
 ## Sorties Terraform
 
-Les outputs exposes dans `Terraform/outputs.tf` facilitent les integrations aval:
+`Terraform/outputs.tf` expose :
 - `blob_storage_account_name`, `blob_containers`
 - `datalake_storage_account_name`, `datalake_filesystems`
 - `blob_primary_connection_string`
@@ -62,39 +64,34 @@ terraform plan
 terraform apply
 ```
 
-Destruction lorsque necessaire:
-
+Pour detruire :
 ```bash
 terraform destroy
 ```
 
 ## Securite et conformite
 
-- HTTPS obligatoire et TLS 1.2 minimum sur les comptes de stockage
-- Key Vault protege par purge protection et soft delete 90 jours
-- Aucun secret ne doit etre committe dans le code ou `terraform.tfvars`
-- Les donnees locales d upload sont ignorees par Git
+- HTTPS obligatoire, TLS 1.2 minimum sur les comptes de stockage
+- Key Vault : purge protection + soft delete 90 jours
+- Aucun secret ne doit etre committe (`terraform.tfvars` ignore)
+- Donnees locales (uploads) ignorees par Git
 
 ## Evolutions envisagees
 
-- Basculement du Key Vault en mode RBAC avec des `azurerm_role_assignment`
-- Ajout de diagnostics et de metrics sur les comptes de stockage
-- Automatisation des pipelines Data Factory et integration CI/CD Terraform
-- Attribution des roles Storage (Blob Data Contributor) aux identites consommatrices
+- Basculer Key Vault en mode RBAC (ajouter `azurerm_role_assignment`)
+- Activer diagnostic et logs sur les comptes de stockage
+- Mettre en place CI/CD Terraform
+- Attribuer les roles Storage (Blob Data Contributor) aux identites consommatrices
 
-## Scripts d ingestion
+## Script d ingestion
 
-- `ingestion/fetch_communes.py` : interroge une API de communes (par defaut `geo.api.gouv.fr`), agrege les donnees par departement (Hauts-de-France par defaut), extrait coordonnees/attributs, puis charge un JSON unique dans Azure Blob Storage. Options pour personnaliser les departements, fournir une cle API et choisir le chemin de sortie.
+- `ingestion/fetch_communes.py` : appelle geo.api.gouv.fr (Hauts-de-France par defaut), enrichit les donnees et charge un JSON unique dans Azure Blob. Options pour changer les departements, fournir une cle API et personnaliser le chemin du blob.
 
+## Notes d execution et depannage
 
-
-
-
-## Notes d execution et de depannage
-
-- Provisionnement via Terraform : 	erraform init && terraform apply dans Terraform/.
-- Execution ingestion : python ingestion/fetch_communes.py --connection-string "DefaultEndpointsProtocol=..." --departements 02 59 60 62 80 --container landing (option --local-output pour conserver une copie).
-- Erreurs rencontrees :
-  - Connection string is either blank or malformed -> variable non definie : recuperer la chaine avec 	erraform output -raw blob_primary_connection_string et la passer a la commande ou exporter AZURE_STORAGE_CONNECTION_STRING.
-  - AuthenticationFailed ... string to sign -> terminal non relance apres setx : rouvrir la session ou passer la chaine directement via --connection-string.
-  - can't open file ... terraform\ingestion\fetch_communes.py -> chemin incorrect : lancer la commande depuis la racine du projet (D:\data eng\Projet-Data-ENG).
+- Provisionnement : `cd Terraform && terraform init && terraform apply`
+- Ingestion : `python ingestion/fetch_communes.py --connection-string "DefaultEndpointsProtocol=..." --departements 02 59 60 62 80 --container landing` (ajouter `--local-output` pour une copie locale)
+- Erreurs courantes :
+  - `Connection string is either blank or malformed` -> recuperer la chaine via `terraform output -raw blob_primary_connection_string` et la fournir (`--connection-string` ou variable `AZURE_STORAGE_CONNECTION_STRING`)
+  - `AuthenticationFailed ... string to sign` -> rouvrir le terminal apres `setx` ou passer la chaine directement en argument
+  - `can't open file ... terraform\ingestion\fetch_communes.py` -> lancer le script depuis la racine `D:\data eng\Projet-Data-ENG`
