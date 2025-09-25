@@ -81,6 +81,28 @@ terraform output databricks_public_subnet_id
 terraform output databricks_workspace_url
 ```
 
+## Preparation workspace Databricks
+
+1. `terraform apply` pour deployer VNet + workspace.
+2. `terraform output databricks_workspace_url` puis ouvrir le lien dans le navigateur.
+3. Creer un secret scope `storage-creds` (UI : Parametres > Developpeur > Secrets ou CLI `databricks secrets create-scope --scope storage-creds`).
+4. Ajouter le secret `blob-key` avec la valeur `AccountKey` (`terraform output -raw blob_primary_connection_string`).
+5. Monter `landing` dans un notebook :
+```python
+configs = {"fs.azure.account.key.bselbrek.dfs.core.windows.net": dbutils.secrets.get("storage-creds", "blob-key")}
+dbutils.fs.mount(
+    source="abfss://landing@bselbrek.dfs.core.windows.net/",
+    mount_point="/mnt/landing",
+    extra_configs=configs,
+)
+```
+
+## Creation cluster Databricks
+
+- Menu **Compute** > **Create compute** (runtime 12.x LTS, mode Single User, auto-termination 15 min).
+- Tester l acces au stockage : `display(dbutils.fs.ls("/mnt/landing"))`.
+- Enchainement des notebooks : `01_bronze_ingest`, `02_silver_transform`, `03_gold_publish`.
+
 ## Deploiement type
 
 ```bash

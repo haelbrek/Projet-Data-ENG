@@ -158,7 +158,40 @@ Si besoin : `"C:\Users\elbre\AppData\Local\Packages\PythonSoftwareFoundation.Pyt
 - `terraform output databricks_workspace_url`
 - Portail Azure > ressource Databricks (`dbw-elbrek`) > **Launch Workspace** / **Workspace URL**.
 
-## 6. Workspace Databricks (VNet injection)
+## 6. Préparer le workspace Databricks
+
+1. `terraform apply` pour garantir que le VNet et le workspace sont déployés.
+2. `cd Terraform && terraform output databricks_workspace_url` pour récupérer l’URL puis ouvre le workspace dans le navigateur.
+3. Crée un secret scope `storage-creds` : via l’UI (nom > Paramètres > Développeur > Secrets > Create) ou en CLI `databricks secrets create-scope --scope storage-creds --initial-manage-principal users`.
+4. Ajoute le secret `blob-key` contenant l’`AccountKey` du compte de stockage :
+   - UI : scope `storage-creds` > Add secret > Key `blob-key` > Value = valeur après `AccountKey=` dans `terraform output -raw blob_primary_connection_string`.
+   - CLI :
+```powershell
+databricks secrets put --scope storage-creds --key blob-key --string-value <ACCOUNT_KEY>
+```
+5. Monte le conteneur `landing` depuis un notebook :
+```python
+configs = {"fs.azure.account.key.bselbrek.dfs.core.windows.net": dbutils.secrets.get("storage-creds", "blob-key")}
+dbutils.fs.mount(
+    source="abfss://landing@bselbrek.dfs.core.windows.net/",
+    mount_point="/mnt/landing",
+    extra_configs=configs,
+)
+```
+6. Vérifie : `display(dbutils.fs.ls("/mnt/landing"))`.
+
+## 7. Créer un cluster Databricks
+
+1. Dans le workspace : **Compute** > **Create compute**.
+2. Paramètres recommandés : `Single User`, runtime `12.3 LTS`, type `Standard_DS3_v2`, 1–2 workers, auto-termination 15 min.
+3. Crée le cluster, patiente jusqu’à l’état `Running`.
+4. Teste l’accès au stockage dans un notebook rattaché :
+```python
+display(dbutils.fs.ls("/mnt/landing/csv"))
+```
+5. Enchaîne sur les notebooks `01_bronze_ingest`, `02_silver_transform`, `03_gold_publish` pour traiter les données.
+
+## 8. Workspace Databricks (VNet injection)
 
 Terraform cree :
 - un reseau virtuel (`virtual_network_name`) et deux sous-reseaux dedies (`databricks_private_subnet_id`, `databricks_public_subnet_id`)
@@ -175,7 +208,7 @@ cd ..
 ```
 Le workspace est pret a recevoir des clusters (mode VNet-injected). Les NSG permettent les communications intra-VNet et la sortie internet. Adapte les regles si ta politique de securite l exige.
 
-## 7. Arborescence
+## 9. Arborescence
 
 ```
 Terraform/
@@ -197,20 +230,20 @@ README.md
 
 Astuce : generer un `Terraform/terraform.tfvars.example` pour partager un gabarit sans secrets.
 
-## 8. Nettoyage
+## 10. Nettoyage
 
 ```bash
 cd Terraform
 terraform destroy
 ```
 
-## 9. Depannage rapide
+## 11. Depannage rapide
 
 - `az login` derriere proxy interceptant TLS : importer le certificat et fixer `REQUESTS_CA_BUNDLE`
 - Noms comptes stockage rejetes : respecter le format (lowercase, 3-24, unique)
 - Upload Terraform ignore : verifier `upload_files_enabled` et l extension `.csv`
 
-## 10. Publier sur GitHub
+## 12. Publier sur GitHub
 
 ```bash
 git init
@@ -222,7 +255,7 @@ git push -u origin main
 
 Ne pas versionner `uploads/` pour eviter toute fuite de donnees.
 
-## 11. Ressources complementaires
+## 13. Ressources complementaires
 
 - `docs/architecture.md`
 - Terraform provider AzureRM : https://registry.terraform.io/providers/hashicorp/azurerm/latest
