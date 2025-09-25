@@ -121,4 +121,6 @@ terraform destroy
   - `Connection string is either blank or malformed` -> recuperer la chaine via `terraform output -raw blob_primary_connection_string` et la fournir (`--connection-string` ou variable `AZURE_STORAGE_CONNECTION_STRING`)
   - `AuthenticationFailed ... string to sign` -> rouvrir le terminal apres `setx` ou passer la chaine directement en argument
   - `can't open file ... terraform\ingestion\fetch_communes.py` -> lancer le script depuis la racine `D:\data eng\Projet-Data-ENG`
+  - `databricks` non reconnu dans PowerShell -> verifier l'installation (`python -m pip show databricks-cli`), ajouter `...\Python310\Scripts` au `PATH`, redemarrer le terminal, ou utiliser `pipx`
+  - Token Databricks -> UI : nom > Parametres > Developpeur > Gerer > Generer un nouveau jeton
 

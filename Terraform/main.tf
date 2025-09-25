@@ -88,6 +88,30 @@ resource "azurerm_network_security_group" "databricks_private" {
     destination_address_prefix = "*"
   }
 
+  security_rule {
+    name                       = "allow-dbx-control-plane-ssh"
+    priority                   = 200
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "AzureDatabricks"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "allow-dbx-control-plane-proxy"
+    priority                   = 201
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5557"
+    source_address_prefix      = "AzureDatabricks"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
   tags = {
     env     = "demo"
     purpose = "databricks"
@@ -121,6 +145,30 @@ resource "azurerm_network_security_group" "databricks_public" {
     destination_port_range     = "*"
     source_address_prefix      = "*"
     destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                       = "allow-dbx-control-plane-ssh"
+    priority                   = 200
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "AzureDatabricks"
+    destination_address_prefix = "VirtualNetwork"
+  }
+
+  security_rule {
+    name                       = "allow-dbx-control-plane-proxy"
+    priority                   = 201
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "5557"
+    source_address_prefix      = "AzureDatabricks"
+    destination_address_prefix = "VirtualNetwork"
   }
 
   tags = {

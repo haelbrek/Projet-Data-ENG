@@ -126,6 +126,38 @@ python ingestion/fetch_communes.py \
   --local-output data/communes.json
 ```
 
+### Token Databricks (UI et CLI)
+
+**UI**
+1. `terraform output databricks_workspace_url` puis ouvre le lien.
+2. Clique sur ton nom (coin haut droit) > **Paramètres** > **Développeur**.
+3. Bouton **Gérer** en face de *Jetons d'accès*, puis **Générer un nouveau jeton**.
+4. Copie le token (visible une seule fois).
+
+**CLI (Python Microsoft Store)**
+```powershell
+python -m pip show databricks-cli
+Get-ChildItem "C:\Users\elbre\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\Scripts" databricks*.*
+python -m pip install --user databricks-cli    # si nécessaire
+$Env:PATH += ';C:\Users\elbre\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\Scripts'
+# Option : python -m pip install --user pipx ; python -m pipx ensurepath ; pipx install databricks-cli
+```
+Ferme/rouvre le terminal puis exécute `databricks --version`.
+
+**Configurer le CLI**
+```powershell
+databricks configure --token
+# Workspace URL : terraform output databricks_workspace_url
+# Token : jeton généré via l'UI
+```
+Si besoin : `"C:\Users\elbre\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\Scripts\databricks.exe" configure --token`.
+
+**Commandes utiles** : `databricks secrets list-scopes`, `databricks clusters list`.
+
+**Retrouver l'URL du workspace**
+- `terraform output databricks_workspace_url`
+- Portail Azure > ressource Databricks (`dbw-elbrek`) > **Launch Workspace** / **Workspace URL**.
+
 ## 6. Workspace Databricks (VNet injection)
 
 Terraform cree :
@@ -195,3 +227,4 @@ Ne pas versionner `uploads/` pour eviter toute fuite de donnees.
 - `docs/architecture.md`
 - Terraform provider AzureRM : https://registry.terraform.io/providers/hashicorp/azurerm/latest
 - Azure CLI : https://learn.microsoft.com/cli/azure
+
