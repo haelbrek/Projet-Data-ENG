@@ -1,12 +1,12 @@
-# Prérequis (outils, pas des packages Python)
-#
-# Installez ces outils sur votre machine pour déployer l’infrastructure.
-# Les versions indiquées sont celles testées avec ce projet.
+﻿# Tooling prerequisites (install manually, not via pip)
+# - Terraform >= 1.1.7
+# - Azure CLI >= 2.52.0
 
-terraform>=1.1.7   # Infrastructure as Code
-azure-cli>=2.52.0  # Authentification et gestion Azure (az login)
-
-# Les providers Terraform sont gérés automatiquement par `terraform init`.
-# - hashicorp/azurerm = 3.46.0
-# - hashicorp/random  ~> 3.6
-
+# Python packages needed for ingestion scripts
+azure-storage-blob>=12.19.0
+requests>=2.31.0
+pandas>=2.2.0
+beautifulsoup4>=4.12.0
+openpyxl>=3.1.5
+sqlalchemy>=2.0.19
+pyodbc>=4.0.39

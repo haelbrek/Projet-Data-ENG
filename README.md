@@ -1,113 +1,183 @@
 # Projet-Data-ENG
 
-Infrastructure Terraform pour deployer un socle de stockage Azure compose d un compte Blob "landing", d un Data Lake Gen2, d un Key Vault et d un Data Factory. Le depot fournit egalement un mecanisme d upload local de fichiers CSV vers le conteneur landing.
+Suites d'outils et d'infrastructure pour collecter, déposer, préparer puis publier des données territoriales (CSV locaux, API, scraping) sur Azure. Le projet automatise les étapes critiques : stockage dans un Data Lake, préparation analytique, et chargement vers Azure SQL Database.
 
-## Apercu
+## 1. Vue d’ensemble
 
-- Resource group unique definissable (nom et region variables).
-- Storage account Blob (HTTPS only, TLS1_2) destine a la zone landing.
-- Storage account ADLS Gen2 (HNS active) avec filesystems `raw`, `staging`, `curated` par defaut.
-- Azure Key Vault en mode Access Policies avec purge protection.
-- Azure Data Factory avec identite managee system-assigned et acces lecture au Key Vault.
-- Upload Terraform optionnel, limite aux fichiers CSV.
+Flux principal :
 
-Un descriptif detaille figure dans `docs/architecture.md`.
+1. **Collecte des sources**  
+   - CSV déposés dans `uploads/landing/` (ex : statistiques INSEE, démographie).  
+   - API `ingestion/fetch_communes.py` pour récupérer un JSON consolidé des communes.  
+   - Jeux scrappés/externes ajoutés dans le dossier `uploads/`.
+2. **Atterrissage dans Azure Data Lake**  
+   - `terraform apply` peut téléverser automatiquement `uploads/landing/` dans le filesystem `raw`.  
+   - Le script `analytics/data_loader.py` permet aussi de rapatrier les données depuis ADLS.
+3. **Préparation & nettoyage**  
+   - Notebook `analytics/notebooks/data_preparation.ipynb` ou module Python `analytics.lib.data_prep` pour transformer les fichiers en tables normalisées (`stg_population`, `dim_commune`, etc.).
+4. **Publication dans Azure SQL Database**  
+   - `analytics/export_to_sql.py` charge les tables préparées vers la base `projet_data_eng` (schéma `dbo` par défaut).  
+   - Le script lit automatiquement la configuration SQL dans `Terraform/terraform.tfvars`.
 
-## Prerequis
+![Flux logique](docs/img/dataflow.png "Collecte -> Data Lake -> Préparation -> SQL") *(image optionnelle à ajouter)*
 
-- Terraform 1.5+ (teste avec 1.6.x).
-- Azure CLI 2.52+ et un compte habilite a creer les ressources.
-- Acces au reseau sortant vers `login.microsoftonline.com` pour l authentification Azure.
-- Python (facultatif) si vous souhaitez ajouter des scripts d ingestion plus tard (voir `requirements.txt`).
+## 2. Prérequis
 
-## Mise en route rapide
+| Outil | Version mini | Commentaires |
+|-------|--------------|--------------|
+| Terraform | 1.5+ | Provisionnement infra |
+| Azure CLI | 2.52+ | Authentification & diagnostics |
+| Python | 3.10+ | Scripts d’ingestion et de préparation |
+| ODBC Driver for SQL Server | 18 (ou 17) | Requis pour l’export vers Azure SQL |
 
-```bash
-# depuis la racine du projet
+Installer les dépendances Python :
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+## 3. Provisionner l’infrastructure
+
+```powershell
 cd Terraform
 terraform init
 terraform plan
 terraform apply
 ```
 
-Repondez `yes` pour appliquer les changements. Listez ensuite les sorties utiles via `terraform output`.
+Variables essentielles à définir dans `Terraform/terraform.tfvars` :
 
-### Upload local (optionnel)
+```hcl
+resource_group_name       = "rg-exemple"
+resource_group_location   = "francecentral"
+datalake_storage_account_name = "nomstockage"
+key_vault_name            = "kv-exemple"
+data_factory_name         = "adf-exemple"
 
-1. Placez vos fichiers CSV dans `uploads/landing/csv/` (dossier ignore par Git).
-2. Dans `Terraform/terraform.tfvars`, positionnez:
-   - `upload_files_enabled = true`
-   - adaptez `upload_source_dir` et `upload_container_name` si besoin
-3. Relancez `terraform apply`. Seuls les fichiers se terminant par `.csv` sont pris en compte.
-4. Consultez `terraform output upload_file_count` pour confirmer le nombre de fichiers publies.
-
-## Configuration
-
-`Terraform/terraform.tfvars` contient un jeu de valeurs exemple (le fichier est ignore par Git). Adaptez notamment:
-
-- `resource_group_name`
-- `resource_group_location`
-- `blob_storage_account_name`
-- `datalake_storage_account_name`
-- `key_vault_name`
-- `data_factory_name`
-- `kv_additional_reader_object_ids`
-- Parametres d upload optionnel (`upload_files_enabled`, `upload_source_dir`, `upload_container_name`)
-
-Les noms de comptes de stockage doivent etre uniques a l echelle Azure, en minuscules et 3 a 24 caracteres.
-
-## Arborescence
-
-```
-Terraform/
-  main.tf
-  variables.tf
-  providers.tf
-  outputs.tf
-  terraform.tfvars        # valeurs locales (ignorees)
-docs/
-  architecture.md
-requirements.txt
-.gitignore
-README.md
+# Azure SQL
+sql_server_name        = "sqlexemple"
+sql_admin_login        = "sqladmin"
+sql_admin_password     = "MotDePasse!2024"
+sql_database_name      = "projet_data_eng"
+sql_firewall_rules = [
+  { name = "Home", start_ip = "X.X.X.X", end_ip = "X.X.X.X" }
+]
 ```
 
-> Astuce: creez un fichier `Terraform/terraform.tfvars.example` pour partager des valeurs d exemple sans exposer vos secrets.
+Sorties Terraform utiles :
 
-## Nettoyage
-
-Pour supprimer les ressources Azure creees:
-
-```bash
-cd Terraform
-terraform destroy
+```powershell
+terraform output datalake_primary_connection_string
+terraform output sql_server_fqdn
+terraform output sql_database_name
 ```
 
-## Depannage
+## 4. Collecter et déposer les données
 
-- **Erreur Azure CLI SSL / proxy**: si `az login` echoue avec `Certificate verification failed`, importez le certificat racine du proxy d entreprise et initialisez `REQUESTS_CA_BUNDLE` (`setx REQUESTS_CA_BUNDLE C:\chemin\proxy.pem`).
-- **Noms de comptes de stockage rejetes**: choisissez un nom unique conforme (lowercase, 3-24 caracteres).
-- **Fichiers ignores lors de l upload**: verifier que `upload_files_enabled` est `true` et que l extension est bien `.csv`.
+### 4.1 Chargement local -> Data Lake
 
-## Publier sur GitHub
-
-1. Effacez les artefacts locaux (ex: `Terraform/.terraform/`, fichiers `.tfstate` si vous ne souhaitez pas les partager).
-2. Initialisez le depot si necessaire:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial infrastructure"
+1. Placer les fichiers CSV/XLSX dans `uploads/landing/` (structure libre).  
+2. Activer l’upload automatique :
+   ```hcl
+   upload_files_enabled = true
+   upload_source_dir    = "../uploads/landing"
+   upload_datalake_filesystem = "raw"
    ```
-3. Configurez le depot distant et poussez:
-   ```bash
-   git remote add origin https://github.com/<organisation>/projet-data-eng.git
-   git push -u origin main
-   ```
+3. `terraform apply` téléverse les fichiers dans `abfss://raw@<storage>.dfs.core.windows.net/`.
 
-Pensez a maintenir `uploads/` hors du versionnement pour eviter de publier des donnees sensibles.
+### 4.2 Ingestion API communes
 
-## Ressources complementaires
+```powershell
+python ingestion/fetch_communes.py `
+  --connection-string "<chaîne ADLS>" `
+  --departements 02 59 60 62 80 `
+  --container raw `
+  --local-output data/communes.json
+```
 
-- Documentation detaillee: `docs/architecture.md`
-- Terraform provider AzureRM: https://registry.terraform.io/providers/hashicorp/azurerm/latest
-- Azure CLI: https://learn.microsoft.com/cli/azure
+Paramètres additionnels : `--departements ""` pour tout récupérer, `--datalake-path` pour changer le chemin distant.
+
+### 4.3 Exploration depuis le Data Lake
+
+Lister/télécharger ce qui est dans ADLS :
+
+```powershell
+python analytics/data_loader.py list --csv-prefix csv/
+python analytics/data_loader.py fetch --csv-prefix csv/ --json-prefix geo/ --save-local
+```
+
+Variables possibles :
+
+- `--connection-string` ou variable `AZURE_STORAGE_CONNECTION_STRING`
+- `--filesystem` (`raw`, `staging`, …)
+- `--keep-json` pour conserver les payloads brut.
+
+## 5. Préparer les tables analytiques
+
+Deux options :
+
+1. **Notebook interactif** : `analytics/notebooks/data_preparation.ipynb`
+   - Auto-détection du projet (`PROJECT_ROOT`).
+   - Harmonise les colonnes (noms normalisés, zfill, conversions numériques).
+   - Produit des tables `stg_*`, `dim_commune`, `bridge_commune_code_postal`.
+   - Permet un export local Parquet (`data/prepared/silver/`) via `SAVE_TO_PARQUET = True`.
+
+2. **Module réutilisable** : `analytics/lib/data_prep.py`
+   - Fonction `prepare_tables()` renvoyant un dict `{nom_table: DataFrame}`.
+   - Utilisé par le script d’export SQL (et testable en ligne de commande).
+
+Exemple rapide :
+
+```python
+from analytics.lib.data_prep import prepare_tables, tables_summary
+
+tables = prepare_tables()
+print(tables_summary(tables))
+```
+
+## 6. Charger vers Azure SQL Database
+
+### 6.1 Préparer la connexion
+
+Le script `analytics/export_to_sql.py` lit automatiquement :
+
+- `Terraform/terraform.tfvars` (`sql_server_name`, `sql_admin_login`, `sql_admin_password`, `sql_database_name`)
+- Variables d’environnement `AZURE_SQL_SERVER`, `AZURE_SQL_USERNAME`, `AZURE_SQL_PASSWORD`, `AZURE_SQL_DATABASE`
+- Paramètres CLI (`--server`, `--username`, …)
+
+Assurez-vous d’avoir le driver ODBC 18 (ou 17) installé.
+
+### 6.2 Commande d’export
+
+```powershell
+python analytics/export_to_sql.py
+```
+
+Options utiles :
+
+- `--chunksize 200` pour ajuster la taille des lots envoyés.
+- `--schema analytics` pour changer le schéma cible.
+- `--preview` pour afficher uniquement le résumé des tables sans les charger.
+
+Le script :
+
+1. Prépare les DataFrames via `prepare_tables()`.
+2. Affiche un résumé des lignes/colonnes.
+3. Tente de se connecter en testant plusieurs drivers (`ODBC 18`, `ODBC 17`, …).
+4. Insère les données table par table (`replace` sur le premier lot, `append` ensuite).
+5. Ignore les tables vides (ex : `dim_commune_geojson` si aucun contour n’est disponible).
+
+### 6.3 Vérification rapide
+
+```sql
+SELECT TABLE_NAME, COUNT(*) AS rows
+FROM INFORMATION_SCHEMA.TABLES t
+JOIN sys.tables s ON s.name = t.TABLE_NAME
+WHERE t.TABLE_SCHEMA = 'dbo';
+```
+python generate_env.py  # g�n�re .env � partir de Terraform/terraform.tfvars si possible
+$env:PYTHONPATH = "D:\data eng\Projet-Data-ENG"  # important pour pointer sur le package local
+python -m uvicorn analytics.api.app.main:app --reload --port 8000
+## 7. Exposer les tables via l’API FastAPI
+$env:PYTHONPATH = "D:\data eng\Projet-Data-ENG"  # important pour pointer sur le package local
+"
