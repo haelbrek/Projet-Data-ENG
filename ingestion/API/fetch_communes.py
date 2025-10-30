@@ -1,4 +1,4 @@
-﻿"""Fetch commune data from a Geo API and upload the transformed dataset as JSON to Azure Blob Storage."""
+﻿"""Fetch commune data from a Geo API and upload the transformed dataset as JSON to Azure Data Lake Storage."""
 
 from __future__ import annotations
 
@@ -17,12 +17,12 @@ from azure.storage.blob import BlobServiceClient, ContentSettings
 DEFAULT_API_URL = "https://geo.api.gouv.fr/communes"
 DEFAULT_FIELDS = "nom,code,codesPostaux,population,surface,centre,contour,codeDepartement,codeRegion,departement,region"
 DEFAULT_DEPARTEMENTS = ["02", "59", "60", "62", "80"]
-DEFAULT_BLOB_PREFIX = "geo/communes"
+DEFAULT_ADLS_PREFIX = "geo/communes"
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Fetch commune coordinates from a Geo API and upload the result as JSON to Azure Blob Storage.",
+        description="Fetch commune coordinates from a Geo API and upload the result as JSON to Azure Data Lake Storage.",
     )
     parser.add_argument(
         "--api-url",
@@ -70,12 +70,14 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--container",
-        default="landing",
-        help="Target container name in Azure Blob Storage (default: landing).",
+        default="raw",
+        help="Filesystem cible dans Azure Data Lake Storage (defaut: raw).",
     )
     parser.add_argument(
+        "--datalake-path",
         "--blob-path",
-        help="Destination blob path. Defaults to geo/communes-<timestamp>.json.",
+        dest="datalake_path",
+        help="Chemin cible dans le Data Lake (defaut: geo/communes-<timestamp>.json).",
     )
     parser.add_argument(
         "--timeout",
@@ -202,15 +204,15 @@ def to_records(communes: List[dict]) -> List[dict]:
     return df.to_dict(orient="records")
 
 
-def upload_json_to_blob(connection_string: str, container: str, blob_path: str, payload: dict) -> None:
+def upload_json_to_datalake(connection_string: str, filesystem: str, path: str, payload: dict) -> None:
     service_client = BlobServiceClient.from_connection_string(connection_string)
-    container_client = service_client.get_container_client(container)
+    container_client = service_client.get_container_client(filesystem)
     try:
         container_client.create_container()
     except ResourceExistsError:
         pass
 
-    blob_client = container_client.get_blob_client(blob_path)
+    blob_client = container_client.get_blob_client(path)
     body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
     content_settings = ContentSettings(content_type="application/json", charset="utf-8")
     blob_client.upload_blob(body, overwrite=True, content_settings=content_settings)
@@ -250,7 +252,7 @@ def main() -> None:
         return
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    blob_path = args.blob_path or f"{DEFAULT_BLOB_PREFIX}-{timestamp}.json"
+    datalake_path = args.datalake_path or f"{DEFAULT_ADLS_PREFIX}-{timestamp}.json"
 
     payload = {
         "source": args.api_url,
@@ -261,8 +263,8 @@ def main() -> None:
         "communes": records,
     }
 
-    upload_json_to_blob(args.connection_string, args.container, blob_path, payload)
-    print(f"Uploaded JSON to blob '{blob_path}' in container '{args.container}'.")
+    upload_json_to_datalake(args.connection_string, args.container, datalake_path, payload)
+    print(f"JSON charge dans le Data Lake '{args.container}/{datalake_path}'.")
 
     if args.local_output:
         args.local_output.parent.mkdir(parents=True, exist_ok=True)
@@ -272,3 +274,11 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+
+

@@ -1,148 +1,147 @@
-﻿# Architecture Azure Storage
+# Architecture & Flux de données
 
-Ce document complete le README et decrit l infrastructure fournie par Terraform pour le projet "Projet-Data-ENG".
+Ce document complète le README. Il décrit la topologie Azure, le cheminement des jeux de données et les composants applicatifs utilisés pour passer d’un fichier brut (CSV/API/scraping) à une table prête pour l’analyse dans Azure SQL Database.
 
-## Apercu fonctionnel
+---
 
-- Compte Blob "landing" pour recevoir les donnees brutes
-- Compte Azure Data Lake Storage Gen2 (zones `raw`, `staging`, `curated`)
-- Azure Key Vault (Access Policies, purge protection)
-- Azure Data Factory (identite system-assigned)
-- Reseau virtuel + sous-reseaux dedies Databricks (private/public)
-- Workspace Azure Databricks en mode VNet injection
-- Upload local optionnel de fichiers CSV via Terraform
+## 1. Sources et formats
 
-## Ressources provisionnees
+| Source | Localisation | Format | Commentaire |
+|--------|--------------|--------|-------------|
+| Jeux CSV (statistiques INSEE, démographie, emploi, logement, etc.) | `uploads/landing/csv/` | CSV | Fichiers récupérés manuellement ou par scraping |
+| Données API communes | `data/communes.json` (local) et `raw/geo/communes.json` (ADLS) | JSON | Généré via `ingestion/fetch_communes.py` |
+| Exports additionnels | `uploads/landing/excel/` | XLSX | Optionnel, non exploité dans la préparation actuelle |
 
-| Ressource | Definition Terraform | Points clefs |
-|-----------|----------------------|--------------|
-| Resource group | `azurerm_resource_group.rg` | Region definie par `var.resource_group_location` |
-| Storage Account landing | `azurerm_storage_account.blob` | Standard LRS, HTTPS only, TLS1_2 |
-| Conteneurs landing | `azurerm_storage_container.landing` | Liste `var.blob_containers`, acces prive |
-| Data Lake (ADLS Gen2) | `azurerm_storage_account.datalake` | HNS actif, Standard LRS |
-| Filesystems ADLS | `azurerm_storage_data_lake_gen2_filesystem.zones` | `raw`, `staging`, `curated` |
-| Key Vault | `azurerm_key_vault.kv` | Access Policies, purge protection 90 jours |
-| Data Factory | `azurerm_data_factory.adf` | Identite managee, orchestration |
-| Reseau virtuel | `azurerm_virtual_network.data` | CIDR parametrable (`vnet_address_space`) |
-| Subnets Databricks | `azurerm_subnet.databricks_*` | Delegation Databricks + endpoints Storage/SQL |
-| Network Security Groups | `azurerm_network_security_group.databricks_*` | Regles VNet<->VNet + sortie Internet |
-| Databricks workspace | `azurerm_databricks_workspace.dbw` | Workspace VNet injection (sku Standard) |
-| Upload local optionnel | `azurerm_storage_blob.uploaded` | Un blob Block par fichier local detecte |
+Toutes les sources convergent vers le Data Lake (filesystem `raw`). Terraform peut téléverser automatiquement le contenu du dossier `uploads/landing/`.
 
-## Variables principales
+---
 
-A definir dans `Terraform/terraform.tfvars` :
-- `resource_group_name`, `resource_group_location`
-- `blob_storage_account_name`, `datalake_storage_account_name`
-- `blob_containers`, `datalake_filesystems`
-- `key_vault_name`, `kv_additional_reader_object_ids`
-- `data_factory_name`
-- `vnet_name`, `vnet_address_space`
-- `databricks_private_subnet_name/prefix`, `databricks_public_subnet_name/prefix`
-- `databricks_workspace_name`
-- Upload optionnel : `upload_files_enabled`, `upload_source_dir`, `upload_container_name`
+## 2. Composants Azure provisionnés
 
-## Upload local via Terraform
+| Ressource Azure | Terraform | Rôle |
+|-----------------|-----------|------|
+| Resource Group | `azurerm_resource_group.rg` | Regroupe l'ensemble des ressources |
+| Storage Account ADLS Gen2 | `azurerm_storage_account.datalake` | Stockage hiérarchique des zones `raw/staging/curated` |
+| Filesystems ADLS | `azurerm_storage_data_lake_gen2_filesystem.zones` | `raw`, `staging`, `curated` (créés automatiquement) |
+| Upload local | `azurerm_storage_blob.uploaded` | Synchronise `uploads/landing/` vers ADLS si activé |
+| Script API | `null_resource.run_fetch_communes` | Exécute `ingestion/fetch_communes.py` lors de `terraform apply` (optionnel) |
+| Key Vault | `azurerm_key_vault.kv` | Stockage de secrets, purge protection activée |
+| Data Factory | `azurerm_data_factory.adf` | Point d’entrée pour orchestrations futures |
+| Azure SQL Server | `azurerm_mssql_server.sql` | Conteneur logique pour la base relationnelle |
+| Azure SQL Database | `azurerm_mssql_database.sql` | Base `projet_data_eng` accueillant les tables préparées |
+| Règles firewall SQL | `azurerm_mssql_firewall_rule.sql` | Autorise l’adresse IP du poste de travail ou des services |
+| API FastAPI (optionnel) | Déployée manuellement (App Service / conteneur) | Expose les tables SQL en REST (`analytics/api/`) |
 
-`local.upload_files` est calcule depuis `upload_source_dir` lorsque `upload_files_enabled = true`.
-- Seuls les fichiers terminant par `.csv` sont retains (regex insensible a la casse)
-- Le chemin virtuel du blob respecte l arborescence locale
-- Un MD5 est calcule pour detecter les changements
+Sorties Terraform utilisées par les scripts :
 
-Bonnes pratiques :
-- Ne pas versionner `uploads/`
-- Organiser les sous-dossiers (`csv/source/date=YYYY-MM-DD/fichier.csv`)
-
-## Sorties Terraform
-
-`Terraform/outputs.tf` expose :
-- `blob_storage_account_name`, `blob_containers`
-- `datalake_storage_account_name`, `datalake_filesystems`
-- `blob_primary_connection_string`
-- `datalake_dfs_endpoint`
-- `key_vault_name`, `key_vault_uri`
-- `data_factory_name`, `data_factory_identity_principal_id`
-- `virtual_network_name`
-- `databricks_private_subnet_id`, `databricks_public_subnet_id`
-- `databricks_workspace_url`
-- `upload_files_enabled`, `upload_file_count`
-
-## Databricks (VNet injection)
-
-- Le reseau virtuel (`azurerm_virtual_network.data`) cree deux sous-reseaux (`azurerm_subnet.databricks_private` et `azurerm_subnet.databricks_public`) delegues a Databricks.
-- Les Network Security Groups associes autorisent le trafic intra VNet et les sorties Internet (combler ou restreindre selon vos politiques).
-- `azurerm_databricks_workspace.dbw` cree un workspace VNet-injecte qui reference automatiquement subnets et NSG.
-
-Sorties utiles :
-```bash
-terraform output virtual_network_name
-terraform output databricks_private_subnet_id
-terraform output databricks_public_subnet_id
-terraform output databricks_workspace_url
+```text
+- datalake_primary_connection_string
+- datalake_dfs_endpoint
+- sql_server_fqdn / sql_server_name / sql_database_name
 ```
 
-## Preparation workspace Databricks
+---
 
-1. `terraform apply` pour deployer VNet + workspace.
-2. `terraform output databricks_workspace_url` puis ouvrir le lien dans le navigateur.
-3. Creer un secret scope `storage-creds` (UI : Parametres > Developpeur > Secrets ou CLI `databricks secrets create-scope --scope storage-creds`).
-4. Ajouter le secret `blob-key` avec la valeur `AccountKey` (`terraform output -raw blob_primary_connection_string`).
-5. Monter `landing` dans un notebook :
-```python
-configs = {"fs.azure.account.key.bselbrek.dfs.core.windows.net": dbutils.secrets.get("storage-creds", "blob-key")}
-dbutils.fs.mount(
-    source="abfss://landing@bselbrek.dfs.core.windows.net/",
-    mount_point="/mnt/landing",
-    extra_configs=configs,
-)
+## 3. Flux de données détaillé
+
+```
+Sources locales/API  -->  uploads/landing/* et data/communes.json
+      |                              |
+      +--> Terraform (upload_files_enabled=true) -----------------------------+
+                                                                              |
+                                                       +--> analytics/data_loader.py (lecture/sauvegarde locale)
+                                                       |
+                             Azure Data Lake Storage (filesystem raw)
+                                                       |
+                                                       +--> analytics/lib/data_prep.py
+                                                            (normalisation, enrichissements géographiques,
+                                                             création des tables stg_* et dim_*)
+                                                       |
+                                                       +--> analytics/export_to_sql.py
+                                                            (chargement par lots vers Azure SQL Database)
+                                                                              |
+                                                Azure SQL Database (dbo.stg_*, dbo.dim_*)
+                                                       |
+                                                       +--> API FastAPI (`analytics/api/`)
+                                                             - Endpoints `/tables/...`
+                                                             - Connexion SQL avec utilisateur dédié
 ```
 
-## Creation cluster Databricks
+Étapes :
 
-- Menu **Compute** > **Create compute** (runtime 12.x LTS, mode Single User, auto-termination 15 min).
-- Tester l acces au stockage : `display(dbutils.fs.ls("/mnt/landing"))`.
-- Enchainement des notebooks : `01_bronze_ingest`, `02_silver_transform`, `03_gold_publish`.
+1. **Collecte** : dépôt des CSV dans `uploads/landing/csv/` et exécution du script API pour `communes.json`.
+2. **Atterrissage** : `terraform apply` synchronise `uploads/landing/` et peut exécuter l’ingestion API (via `run_fetch_communes=true`). Les fichiers se retrouvent sous `abfss://raw/<chemin local>`.
+3. **Préparation** :
+   - Notebook `analytics/notebooks/data_preparation.ipynb` pour l’exploration interactive.
+   - Module `analytics.lib.data_prep` pour des traitements automatisés (utilisé par `export_to_sql.py`).
+   - Normalisations réalisées : renommage de colonnes (`TableSpec`), parsing des identifiants GEO, conversion en numérique, zfill sur codes, extraction des codes postaux.
+4. **Publication** :
+   - `analytics/export_to_sql.py` lit les paramètres SQL (tfvars, env, CLI), teste le driver ODBC (`ODBC 18`, `ODBC 17`, `SQL Native Client 11.0`) et charge les tables par lots (`chunksize` configurable, `replace` + `append`).
+   - Les tables cibles sont créées dans le schéma `dbo` (modifiable).
 
-## Deploiement type
+---
 
-```bash
-cd Terraform
-terraform init
-terraform plan
-terraform apply
-```
+## 4. Tables préparées
 
-Pour detruire :
-```bash
-terraform destroy
-```
+| Table | Description | Particularités |
+|-------|-------------|----------------|
+| `stg_population` | Population par PCS, sexe, tranche d’âge | Enrichie des colonnes `geo_reference_year`, `geo_level_code`, `geo_code` |
+| `stg_creation_entreprises` | Créations d’entreprises (activité, forme juridique) | `creation_count` numérique |
+| `stg_creation_entrepreneurs_individuels` | Créations EI selon sexe/activité | Colonnes `age_group`, `creation_count` |
+| `stg_deces` / `stg_naissances` | Statistiques vitales annuelles | Colonnes `event_code`, `year`, `departement_code` |
+| `stg_ds_filosofi`, `stg_filosofi_age_tp_nivvie` | Indicateurs socio-économiques | Codes indicateurs normalisés |
+| `stg_emploi_chomage`, `stg_logement`, `stg_menage`, `stg_fecondite` | Indicateurs thématiques | Conversion numérique automatique |
+| `dim_commune` | Dimension commune (population, surface, codes INSEE) | Nettoyage des codes postaux en chaîne `comma-separated` |
+| `dim_commune_geojson` | Contours géographiques GeoJSON | Vide si le JSON ne contient pas de géométrie |
+| `bridge_commune_code_postal` | Table de correspondance (commune ↔ code postal) | Générée via `explode` sur `codes_postaux` |
 
-## Securite et conformite
+Toutes les tables sont chargées dans Azure SQL via `to_sql`. Les colonnes textuelles restent en `NVARCHAR`, les mesures en `FLOAT` (nullable).
 
-- HTTPS obligatoire, TLS 1.2 minimum sur les comptes de stockage
-- Key Vault : purge protection + soft delete 90 jours
-- Aucun secret ne doit etre committe (`terraform.tfvars` ignore)
-- Donnees locales (uploads) ignorees par Git
+---
 
-## Evolutions envisagees
+## 5. Orchestration et scripts
 
-- Basculer Key Vault en mode RBAC (ajouter `azurerm_role_assignment`)
-- Activer diagnostic et logs sur les comptes de stockage
-- Mettre en place CI/CD Terraform
-- Attribuer les roles Storage (Blob Data Contributor) aux identites consommatrices
+| Script / notebook | Rôle | Commande principale |
+|-------------------|------|---------------------|
+| `ingestion/fetch_communes.py` | Récupère et charge le JSON des communes (API geo.api.gouv.fr) | `python ingestion/fetch_communes.py --connection-string ... --container raw` |
+| `analytics/data_loader.py` | Liste/télécharge les blobs ADLS en local | `python analytics/data_loader.py list --csv-prefix csv/` |
+| `analytics/notebooks/data_preparation.ipynb` | Préparation interactive des tables | Exécution dans VS Code/Jupyter |
+| `analytics/lib/data_prep.py` | Fonctions de transformation réutilisables | `from analytics.lib.data_prep import prepare_tables` |
+| `analytics/export_to_sql.py` | Charge les tables préparées dans Azure SQL | `python analytics/export_to_sql.py --preview` / `python analytics/export_to_sql.py` |
 
-## Script d ingestion
+---
 
-- `ingestion/fetch_communes.py` : appelle geo.api.gouv.fr (Hauts-de-France par defaut), enrichit les donnees et charge un JSON unique dans Azure Blob. Options pour changer les departements, fournir une cle API et personnaliser le chemin du blob.
+## 6. Sécurité & bonnes pratiques
 
-## Notes d execution et depannage
+- **Secrets** : ne jamais commiter `terraform.tfvars` ni les sorties contenant des credentials. Utiliser Key Vault pour stocker les chaînes sensibles.
+- **ODBC** : installer le driver 18 (ou 17). Sur Windows, on peut vérifier via `Get-OdbcDriver`.
+- **Réseau** : définir des règles firewall précises (`sql_firewall_rules`). Désactiver `sql_allow_azure_services` si non nécessaire.
+- **Data Lake** : l’upload Terraform ne traite que les extensions `.csv`/`.xlsx`. Ajouter des fichiers JSON si besoin via `azcopy` ou `data_loader.py`.
+- **Nettoyage** : `terraform destroy` supprime l’infrastructure, mais pas les données locales (`uploads/`, `data/`).
 
-- Provisionnement : `cd Terraform && terraform init && terraform apply`
-- Ingestion : `python ingestion/fetch_communes.py --connection-string "DefaultEndpointsProtocol=..." --departements 02 59 60 62 80 --container landing` (ajouter `--local-output` pour une copie locale)
-- Erreurs courantes :
-  - `Connection string is either blank or malformed` -> recuperer la chaine via `terraform output -raw blob_primary_connection_string` et la fournir (`--connection-string` ou variable `AZURE_STORAGE_CONNECTION_STRING`)
-  - `AuthenticationFailed ... string to sign` -> rouvrir le terminal apres `setx` ou passer la chaine directement en argument
-  - `can't open file ... terraform\ingestion\fetch_communes.py` -> lancer le script depuis la racine `D:\data eng\Projet-Data-ENG`
-  - `databricks` non reconnu dans PowerShell -> verifier l'installation (`python -m pip show databricks-cli`), ajouter `...\Python310\Scripts` au `PATH`, redemarrer le terminal, ou utiliser `pipx`
-  - Token Databricks -> UI : nom > Parametres > Developpeur > Gerer > Generer un nouveau jeton
+---
 
+## 7. Dépannage
+
+| Problème | Cause probable | Solution |
+|----------|----------------|----------|
+| `ContainerNotFound` lors de l’upload | Filesystem `raw` non créé | Vérifier que l’account ADLS est provisionné (`terraform apply`) ou créer le container via Azure Portal |
+| `IM002` driver ODBC introuvable | Driver non installé ou PATH invalide | Installer `ODBC Driver 18 for SQL Server`, ouvrir un nouveau terminal |
+| `07002 Champ COUNT incorrect` | Trop de paramètres dans un insert multi | Utiliser la version actuelle de `export_to_sql.py` (insertion par lots maîtrisée) |
+| `ImportError: analytics` | Conflit avec un paquet pip nommé `analytics` | Le script force maintenant l’insertion du dossier projet dans `sys.path` |
+| `KeyVault VaultAlreadyExists` | Nom de coffre déjà pris | Choisir un nom unique (`kvelbrek-prod-kv` par exemple) ou purger l’ancien coffre |
+| API : `HYT00` timeout SQL | Temps de réponse trop long | Augmenter `chunksize`, optimiser les requêtes, vérifier les indexes |
+
+---
+
+## 8. Évolutions possibles
+
+- Ajouter une couche `staging` <-> `curated` dans ADLS avec des jobs Data Factory / Synapse.  
+- Déployer un jeu de vues SQL (`dbo.v_population`, etc.) pour faciliter la consommation BI.  
+- Mettre en place une pipeline CI/CD Terraform + tests des scripts.  
+- Ajouter des validations de schémas (ex : `pandera`) avant export.
+- Industrialiser l’API (authentification JWT, caching, monitoring Application Insights).
+
+---
+
+_Dernière mise à jour : 2025-10-29_ (adapter manuellement lors des prochaines modifications).

@@ -1,263 +1,183 @@
-ï»¿# Projet-Data-ENG
+# Projet-Data-ENG
 
-Infrastructure-as-Code (Terraform) et scripts d ingestion pour provisionner un socle Azure Storage (landing + Data Lake), un Key Vault, un Data Factory et automatiser l import des communes via l API geo.api.gouv.fr.
+Suites d'outils et d'infrastructure pour collecter, dÃ©poser, prÃ©parer puis publier des donnÃ©es territoriales (CSV locaux, API, scraping) sur Azure. Le projet automatise les Ã©tapes critiques : stockage dans un Data Lake, prÃ©paration analytique, et chargement vers Azure SQL Database.
 
-## 1. Infrastructure
+## 1. Vue dâ€™ensemble
 
-- Groupe de ressources Azure (nom et region parametrables)
-- Compte de stockage Blob "landing" (HTTPS only, TLS1_2)
-- Compte ADLS Gen2 (HNS actif) avec filesystems `raw`, `staging`, `curated`
-- Azure Key Vault (Access Policies, purge protection)
-- Azure Data Factory avec identite system-assigned
-- Reseau virtuel avec sous-reseaux dedies Databricks (private/public + NSG)
-- Workspace Azure Databricks en mode VNet injection
-- Upload local optionnel des fichiers CSV via Terraform
+Flux principal :
 
-Documentation detaillee : `docs/architecture.md`.
+1. **Collecte des sources**  
+   - CSV dÃ©posÃ©s dans `uploads/landing/` (ex : statistiques INSEE, dÃ©mographie).  
+   - API `ingestion/fetch_communes.py` pour rÃ©cupÃ©rer un JSON consolidÃ© des communes.  
+   - Jeux scrappÃ©s/externes ajoutÃ©s dans le dossier `uploads/`.
+2. **Atterrissage dans Azure Data Lake**  
+   - `terraform apply` peut tÃ©lÃ©verser automatiquement `uploads/landing/` dans le filesystem `raw`.  
+   - Le script `analytics/data_loader.py` permet aussi de rapatrier les donnÃ©es depuis ADLS.
+3. **PrÃ©paration & nettoyage**  
+   - Notebook `analytics/notebooks/data_preparation.ipynb` ou module Python `analytics.lib.data_prep` pour transformer les fichiers en tables normalisÃ©es (`stg_population`, `dim_commune`, etc.).
+4. **Publication dans Azure SQL Database**  
+   - `analytics/export_to_sql.py` charge les tables prÃ©parÃ©es vers la base `projet_data_eng` (schÃ©ma `dbo` par dÃ©faut).  
+   - Le script lit automatiquement la configuration SQL dans `Terraform/terraform.tfvars`.
 
-## 2. Prerequis
+![Flux logique](docs/img/dataflow.png "Collecte -> Data Lake -> PrÃ©paration -> SQL") *(image optionnelle Ã  ajouter)*
 
-- Terraform 1.5+
-- Azure CLI 2.52+
-- Compte Azure avec droits de creation
-- Python 3.10+ et `pip`
+## 2. PrÃ©requis
 
-## 3. Deploiement rapide
+| Outil | Version mini | Commentaires |
+|-------|--------------|--------------|
+| Terraform | 1.5+ | Provisionnement infra |
+| Azure CLI | 2.52+ | Authentification & diagnostics |
+| Python | 3.10+ | Scripts dâ€™ingestion et de prÃ©paration |
+| ODBC Driver for SQL Server | 18 (ou 17) | Requis pour lâ€™export vers Azure SQL |
 
-```bash
+Installer les dÃ©pendances Python :
+
+```powershell
+python -m pip install -r requirements.txt
+```
+
+## 3. Provisionner lâ€™infrastructure
+
+```powershell
 cd Terraform
 terraform init
 terraform plan
 terraform apply
 ```
 
-Repondez `yes` pour appliquer. Les sorties utiles sont visibles via `terraform output`.
+Variables essentielles Ã  dÃ©finir dans `Terraform/terraform.tfvars` :
 
-### Upload Terraform optionnel
+```hcl
+resource_group_name       = "rg-exemple"
+resource_group_location   = "francecentral"
+datalake_storage_account_name = "nomstockage"
+key_vault_name            = "kv-exemple"
+data_factory_name         = "adf-exemple"
 
-1. Placer les CSV dans `uploads/landing/csv/`
-2. Dans `Terraform/terraform.tfvars`, fixer `upload_files_enabled = true` (adapter `upload_source_dir`, `upload_container_name` si besoin)
-3. `terraform apply`
-4. ContrÃ´ler `terraform output upload_file_count`
-
-## 4. Configuration projet
-
-Parametres principaux (`Terraform/terraform.tfvars` non versionne) :
-- `resource_group_name`
-- `resource_group_location`
-- `blob_storage_account_name`
-- `datalake_storage_account_name`
-- `key_vault_name`
-- `data_factory_name`
-- `kv_additional_reader_object_ids`
-- Variables reseau Databricks (`vnet_name`, `vnet_address_space`, `databricks_*_subnet_*`)
-- `databricks_workspace_name`
-- Variables d upload optionnel (`upload_files_enabled`, `upload_source_dir`, `upload_container_name`)
-
-Les comptes de stockage doivent respecter : minuscules, chiffres, 3-24 caracteres, nom globalement unique.
-
-## 5. Ingestion des communes (API geo.api.gouv.fr)
-
-Le repertoire `ingestion/` contient `fetch_communes.py`. Le script :
-- interroge l API geo.api.gouv.fr (departements Hauts-de-France par defaut)
-- enrichit la reponse (longitude/latitude, libelles departement/region, contour GeoJSON)
-- construit un JSON unique et l envoie dans le conteneur Blob `landing`
-- optionnellement, ecrit un fichier JSON local
-
-### Installation dependances
-
-```bash
-python -m pip install -r requirements.txt
+# Azure SQL
+sql_server_name        = "sqlexemple"
+sql_admin_login        = "sqladmin"
+sql_admin_password     = "MotDePasse!2024"
+sql_database_name      = "projet_data_eng"
+sql_firewall_rules = [
+  { name = "Home", start_ip = "X.X.X.X", end_ip = "X.X.X.X" }
+]
 ```
 
-### Recuperer la chaine de connexion Azure Storage
+Sorties Terraform utiles :
 
-```bash
-cd Terraform
-terraform output -raw blob_primary_connection_string
-cd ..
+```powershell
+terraform output datalake_primary_connection_string
+terraform output sql_server_fqdn
+terraform output sql_database_name
 ```
 
-### Execution standard
+## 4. Collecter et dÃ©poser les donnÃ©es
 
-```bash
-python ingestion/fetch_communes.py \
-  --connection-string "DefaultEndpointsProtocol=..." \
-  --departements 02 59 60 62 80 \
-  --container landing \
-  --local-output data/communes_hauts_de_france.json
-```
+### 4.1 Chargement local -> Data Lake
 
-Options utiles :
-- Omettre `--departements` (ou passer `--departements ""`) pour recuperer toutes les communes
-- `--blob-path` pour fixer le nom du JSON dans le conteneur
-- `--api-key`, `--api-key-header` (X-API-Key par exemple) ou `--api-key-param` pour les APIs protegees
+1. Placer les fichiers CSV/XLSX dans `uploads/landing/` (structure libre).  
+2. Activer lâ€™upload automatique :
+   ```hcl
+   upload_files_enabled = true
+   upload_source_dir    = "../uploads/landing"
+   upload_datalake_filesystem = "raw"
+   ```
+3. `terraform apply` tÃ©lÃ©verse les fichiers dans `abfss://raw@<storage>.dfs.core.windows.net/`.
 
-### Difficultes rencontrees
+### 4.2 Ingestion API communes
 
-| Probleme | Cause | Solution |
-|----------|-------|----------|
-| `Connection string is either blank or malformed` | chaine non fournie | recuperer la chaine via Terraform/portail et la transmettre (`--connection-string` ou variable d environnement) |
-| `AuthenticationFailed ... string to sign '/bselbrek/landing restype:container'` | `setx` pris en compte uniquement apres ouverture d un nouveau terminal | rouvrir la session ou passer la chaine en argument |
-| `can't open file ... terraform\ingestion\fetch_communes.py` | commande lancee depuis le dossier Terraform | executer depuis la racine `D:\data eng\Projet-Data-ENG` |
-
-### Commandes resumees
-
-```bash
-# Provision infra
-cd Terraform
-terraform init
-terraform apply
-cd ..
-
-# Installation dependances Python
-python -m pip install -r requirements.txt
-
-# Recuperer la chaine de connexion
-cd Terraform
-terraform output -raw blob_primary_connection_string
-cd ..
-
-# Lancer l ingestion JSON
-python ingestion/fetch_communes.py \
-  --connection-string "DefaultEndpointsProtocol=..." \
-  --departements 02 59 60 62 80 \
-  --container landing \
+```powershell
+python ingestion/fetch_communes.py `
+  --connection-string "<chaÃ®ne ADLS>" `
+  --departements 02 59 60 62 80 `
+  --container raw `
   --local-output data/communes.json
 ```
 
-### Token Databricks (UI et CLI)
+ParamÃ¨tres additionnels : `--departements ""` pour tout rÃ©cupÃ©rer, `--datalake-path` pour changer le chemin distant.
 
-**UI**
-1. `terraform output databricks_workspace_url` puis ouvre le lien.
-2. Clique sur ton nom (coin haut droit) > **Paramètres** > **Développeur**.
-3. Bouton **Gérer** en face de *Jetons d'accès*, puis **Générer un nouveau jeton**.
-4. Copie le token (visible une seule fois).
+### 4.3 Exploration depuis le Data Lake
 
-**CLI (Python Microsoft Store)**
+Lister/tÃ©lÃ©charger ce qui est dans ADLS :
+
 ```powershell
-python -m pip show databricks-cli
-Get-ChildItem "C:\Users\elbre\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\Scripts" databricks*.*
-python -m pip install --user databricks-cli    # si nécessaire
-$Env:PATH += ';C:\Users\elbre\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\Scripts'
-# Option : python -m pip install --user pipx ; python -m pipx ensurepath ; pipx install databricks-cli
+python analytics/data_loader.py list --csv-prefix csv/
+python analytics/data_loader.py fetch --csv-prefix csv/ --json-prefix geo/ --save-local
 ```
-Ferme/rouvre le terminal puis exécute `databricks --version`.
 
-**Configurer le CLI**
-```powershell
-databricks configure --token
-# Workspace URL : terraform output databricks_workspace_url
-# Token : jeton généré via l'UI
-```
-Si besoin : `"C:\Users\elbre\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.10_qbz5n2kfra8p0\LocalCache\local-packages\Python310\Scripts\databricks.exe" configure --token`.
+Variables possibles :
 
-**Commandes utiles** : `databricks secrets list-scopes`, `databricks clusters list`.
+- `--connection-string` ou variable `AZURE_STORAGE_CONNECTION_STRING`
+- `--filesystem` (`raw`, `staging`, â€¦)
+- `--keep-json` pour conserver les payloads brut.
 
-**Retrouver l'URL du workspace**
-- `terraform output databricks_workspace_url`
-- Portail Azure > ressource Databricks (`dbw-elbrek`) > **Launch Workspace** / **Workspace URL**.
+## 5. PrÃ©parer les tables analytiques
 
-## 6. Préparer le workspace Databricks
+Deux options :
 
-1. `terraform apply` pour garantir que le VNet et le workspace sont déployés.
-2. `cd Terraform && terraform output databricks_workspace_url` pour récupérer l’URL puis ouvre le workspace dans le navigateur.
-3. Crée un secret scope `storage-creds` : via l’UI (nom > Paramètres > Développeur > Secrets > Create) ou en CLI `databricks secrets create-scope --scope storage-creds --initial-manage-principal users`.
-4. Ajoute le secret `blob-key` contenant l’`AccountKey` du compte de stockage :
-   - UI : scope `storage-creds` > Add secret > Key `blob-key` > Value = valeur après `AccountKey=` dans `terraform output -raw blob_primary_connection_string`.
-   - CLI :
-```powershell
-databricks secrets put --scope storage-creds --key blob-key --string-value <ACCOUNT_KEY>
-```
-5. Monte le conteneur `landing` depuis un notebook :
+1. **Notebook interactif** : `analytics/notebooks/data_preparation.ipynb`
+   - Auto-dÃ©tection du projet (`PROJECT_ROOT`).
+   - Harmonise les colonnes (noms normalisÃ©s, zfill, conversions numÃ©riques).
+   - Produit des tables `stg_*`, `dim_commune`, `bridge_commune_code_postal`.
+   - Permet un export local Parquet (`data/prepared/silver/`) via `SAVE_TO_PARQUET = True`.
+
+2. **Module rÃ©utilisable** : `analytics/lib/data_prep.py`
+   - Fonction `prepare_tables()` renvoyant un dict `{nom_table: DataFrame}`.
+   - UtilisÃ© par le script dâ€™export SQL (et testable en ligne de commande).
+
+Exemple rapide :
+
 ```python
-configs = {"fs.azure.account.key.bselbrek.dfs.core.windows.net": dbutils.secrets.get("storage-creds", "blob-key")}
-dbutils.fs.mount(
-    source="abfss://landing@bselbrek.dfs.core.windows.net/",
-    mount_point="/mnt/landing",
-    extra_configs=configs,
-)
-```
-6. Vérifie : `display(dbutils.fs.ls("/mnt/landing"))`.
+from analytics.lib.data_prep import prepare_tables, tables_summary
 
-## 7. Créer un cluster Databricks
-
-1. Dans le workspace : **Compute** > **Create compute**.
-2. Paramètres recommandés : `Single User`, runtime `12.3 LTS`, type `Standard_DS3_v2`, 1–2 workers, auto-termination 15 min.
-3. Crée le cluster, patiente jusqu’à l’état `Running`.
-4. Teste l’accès au stockage dans un notebook rattaché :
-```python
-display(dbutils.fs.ls("/mnt/landing/csv"))
-```
-5. Enchaîne sur les notebooks `01_bronze_ingest`, `02_silver_transform`, `03_gold_publish` pour traiter les données.
-
-## 8. Workspace Databricks (VNet injection)
-
-Terraform cree :
-- un reseau virtuel (`virtual_network_name`) et deux sous-reseaux dedies (`databricks_private_subnet_id`, `databricks_public_subnet_id`)
-- deux Network Security Groups associes pour controler les flux (lances automatiques)
-- un workspace Azure Databricks (`databricks_workspace_name`) deja rattache au VNet
-
-Apres `terraform apply`, recupere les informations utiles :
-```bash
-cd Terraform
-terraform output databricks_workspace_url
-terraform output databricks_private_subnet_id
-terraform output databricks_public_subnet_id
-cd ..
-```
-Le workspace est pret a recevoir des clusters (mode VNet-injected). Les NSG permettent les communications intra-VNet et la sortie internet. Adapte les regles si ta politique de securite l exige.
-
-## 9. Arborescence
-
-```
-Terraform/
-  main.tf
-  variables.tf
-  providers.tf
-  outputs.tf
-  terraform.tfvars        # valeurs locales (ignorees)
-docs/
-  architecture.md
-ingestion/
-  fetch_communes.py
-uploads/
-  landing/
-requirements.txt
-.gitignore
-README.md
+tables = prepare_tables()
+print(tables_summary(tables))
 ```
 
-Astuce : generer un `Terraform/terraform.tfvars.example` pour partager un gabarit sans secrets.
+## 6. Charger vers Azure SQL Database
 
-## 10. Nettoyage
+### 6.1 PrÃ©parer la connexion
 
-```bash
-cd Terraform
-terraform destroy
+Le script `analytics/export_to_sql.py` lit automatiquement :
+
+- `Terraform/terraform.tfvars` (`sql_server_name`, `sql_admin_login`, `sql_admin_password`, `sql_database_name`)
+- Variables dâ€™environnement `AZURE_SQL_SERVER`, `AZURE_SQL_USERNAME`, `AZURE_SQL_PASSWORD`, `AZURE_SQL_DATABASE`
+- ParamÃ¨tres CLI (`--server`, `--username`, â€¦)
+
+Assurez-vous dâ€™avoir le driver ODBC 18 (ou 17) installÃ©.
+
+### 6.2 Commande dâ€™export
+
+```powershell
+python analytics/export_to_sql.py
 ```
 
-## 11. Depannage rapide
+Options utiles :
 
-- `az login` derriere proxy interceptant TLS : importer le certificat et fixer `REQUESTS_CA_BUNDLE`
-- Noms comptes stockage rejetes : respecter le format (lowercase, 3-24, unique)
-- Upload Terraform ignore : verifier `upload_files_enabled` et l extension `.csv`
+- `--chunksize 200` pour ajuster la taille des lots envoyÃ©s.
+- `--schema analytics` pour changer le schÃ©ma cible.
+- `--preview` pour afficher uniquement le rÃ©sumÃ© des tables sans les charger.
 
-## 12. Publier sur GitHub
+Le script :
 
-```bash
-git init
-git add .
-git commit -m "Initial infrastructure"
-git remote add origin https://github.com/<organisation>/projet-data-eng.git
-git push -u origin main
+1. PrÃ©pare les DataFrames via `prepare_tables()`.
+2. Affiche un rÃ©sumÃ© des lignes/colonnes.
+3. Tente de se connecter en testant plusieurs drivers (`ODBC 18`, `ODBC 17`, â€¦).
+4. InsÃ¨re les donnÃ©es table par table (`replace` sur le premier lot, `append` ensuite).
+5. Ignore les tables vides (ex : `dim_commune_geojson` si aucun contour nâ€™est disponible).
+
+### 6.3 VÃ©rification rapide
+
+```sql
+SELECT TABLE_NAME, COUNT(*) AS rows
+FROM INFORMATION_SCHEMA.TABLES t
+JOIN sys.tables s ON s.name = t.TABLE_NAME
+WHERE t.TABLE_SCHEMA = 'dbo';
 ```
-
-Ne pas versionner `uploads/` pour eviter toute fuite de donnees.
-
-## 13. Ressources complementaires
-
-- `docs/architecture.md`
-- Terraform provider AzureRM : https://registry.terraform.io/providers/hashicorp/azurerm/latest
-- Azure CLI : https://learn.microsoft.com/cli/azure
-
+python generate_env.py  # génère .env à partir de Terraform/terraform.tfvars si possible
+$env:PYTHONPATH = "D:\data eng\Projet-Data-ENG"  # important pour pointer sur le package local
+python -m uvicorn analytics.api.app.main:app --reload --port 8000
+## 7. Exposer les tables via lâ€™API FastAPI
+$env:PYTHONPATH = "D:\data eng\Projet-Data-ENG"  # important pour pointer sur le package local
+"
