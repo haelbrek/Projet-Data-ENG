@@ -28,6 +28,12 @@ resource "azurerm_storage_data_lake_gen2_filesystem" "zones" {
   storage_account_id = azurerm_storage_account.datalake.id
 }
 
+# Conteneur blob existant (ex: "raw") référencé en data pour éviter les conflits d'import
+data "azurerm_storage_container" "upload" {
+  name                 = var.upload_datalake_filesystem
+  storage_account_name = azurerm_storage_account.datalake.name
+}
+
 ############################################
 # Upload local -> Data Lake (optionnel)
 ############################################
@@ -51,7 +57,7 @@ resource "azurerm_storage_blob" "uploaded" {
   for_each               = toset(local.upload_files)
   name                   = each.value
   storage_account_name   = azurerm_storage_account.datalake.name
-  storage_container_name = var.upload_datalake_filesystem
+  storage_container_name = data.azurerm_storage_container.upload.name
   type                   = "Block"
   source                 = "${path.module}/${var.upload_source_dir}/${each.value}"
   content_md5            = filemd5("${path.module}/${var.upload_source_dir}/${each.value}")

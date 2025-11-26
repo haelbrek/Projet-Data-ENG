@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import contextlib
+import json
 import os
 import re
 import sys
@@ -163,10 +164,22 @@ def export_tables(
     if_exists: str,
     chunksize: int = 200,
 ) -> None:
+    def _serialize_nested(value: object) -> object:
+        # SQL Server via pyodbc ne sait pas décrire des listes/dicts -> on sérialise en JSON.
+        if isinstance(value, (list, dict)):
+            return json.dumps(value, ensure_ascii=False)
+        return value
+
     for table_name, df in tables.items():
         if df.empty:
             print(f"[WARN] Table {table_name} vide - skip.")
             continue
+
+        # Normalise les colonnes contenant des listes/dicts (ex: contour_geojson_coordinates)
+        df = df.copy()
+        for col in df.columns:
+            if df[col].dtype == object:
+                df[col] = df[col].apply(_serialize_nested)
 
         first_chunk = True
         for start in range(0, len(df), chunksize):
