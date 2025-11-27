@@ -86,3 +86,12 @@ python analytics/export_to_sql_bis.py
 ```
 - Mode preview : `python analytics/export_to_sql_bis.py --preview` (aucun chargement).
 - Les tables sont les memes que pour la base principale.
+
+### 5.3 Exporter la base _bis vers ADLS en Parquet (source BDD dans le Data Lake)
+- Prerequis : chaine ADLS definie (`ADLS_CONNECTION_STRING` ou `AZURE_STORAGE_CONNECTION_STRING`) et conteneur/filesystem `raw` existe.
+- Commande :
+  ```powershell
+  # vers raw/sql-bis-parquet/<table>.parquet
+  python analytics/export_to_adls_bis.py --container raw --prefix sql-bis-parquet/
+  ```
+  Options : `--tables` pour cibler, `--limit` pour echantillonner, `--adls-connection-string` pour passer la chaine en CLI.
