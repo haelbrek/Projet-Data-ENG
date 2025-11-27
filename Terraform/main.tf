@@ -186,6 +186,19 @@ resource "azurerm_mssql_database" "sql" {
   }
 }
 
+# Base SQL secondaire (suffixe _bis par defaut)
+resource "azurerm_mssql_database" "sql_bis" {
+  name      = "${var.sql_database_name}_bis"
+  server_id = azurerm_mssql_server.sql.id
+  sku_name  = var.sql_database_sku_name
+  collation = var.sql_database_collation
+
+  tags = {
+    env     = "demo"
+    purpose = "sqldb-bis"
+  }
+}
+
 locals {
   sql_firewall_rule_map = { for rule in local.sql_firewall_rules : rule.name => rule }
 }

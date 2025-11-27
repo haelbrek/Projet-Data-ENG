@@ -66,3 +66,32 @@ Notes :
    python -m uvicorn analytics.api.app.main:app --reload --port 8000
    ```
    Les endpoints `/tables/...` renverront alors les donnees depuis Azure SQL (ex: `/tables/dim_commune?limit=100`).
+
+## 5. Creer et alimenter la base SQL secondaire (_bis)
+### 5.1 Provisionner la base secondaire
+- Terraform : un bloc `azurerm_mssql_database.sql_bis` cree la base `${sql_database_name}_bis`. Appliquer :
+  ```powershell
+  cd Terraform
+  terraform apply --auto-approve
+  ```
+  (ou cree la base manuellement sur le serveur `sqlelbrek-prod` avec le nom `<base>_bis`).
+
+### 5.2 Charger les donnees dans la base _bis
+```powershell
+$env:AZURE_SQL_SERVER = "sqlelbrek-prod.database.windows.net"
+$env:AZURE_SQL_DATABASE_BIS = "<nom_base>_bis"   # ex: projet_data_eng_bis
+$env:AZURE_SQL_USERNAME = "sqladmin"
+$env:AZURE_SQL_PASSWORD = "<motdepasse>"
+python analytics/export_to_sql_bis.py
+```
+- Mode preview : `python analytics/export_to_sql_bis.py --preview` (aucun chargement).
+- Les tables sont les memes que pour la base principale.
+
+### 5.3 Exporter la base _bis vers ADLS en Parquet (source BDD dans le Data Lake)
+- Prerequis : chaine ADLS definie (`ADLS_CONNECTION_STRING` ou `AZURE_STORAGE_CONNECTION_STRING`) et conteneur/filesystem `raw` existe.
+- Commande :
+  ```powershell
+  # vers raw/sql-bis-parquet/<table>.parquet
+  python analytics/export_to_adls_bis.py --container raw --prefix sql-bis-parquet/
+  ```
+  Options : `--tables` pour cibler, `--limit` pour echantillonner, `--adls-connection-string` pour passer la chaine en CLI.
