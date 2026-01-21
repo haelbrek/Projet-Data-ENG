@@ -28,6 +28,15 @@ resource "azurerm_storage_data_lake_gen2_filesystem" "zones" {
   storage_account_id = azurerm_storage_account.datalake.id
 }
 
+# Workspace Databricks (Azure)
+resource "azurerm_databricks_workspace" "dbw" {
+  name                        = var.databricks_workspace_name
+  resource_group_name         = azurerm_resource_group.rg.name
+  location                    = azurerm_resource_group.rg.location
+  sku                         = "standard"
+  managed_resource_group_name = local.databricks_managed_rg_name
+}
+
 # Conteneur blob existant (ex: "raw") référencé en data pour éviter les conflits d'import
 data "azurerm_storage_container" "upload" {
   name                 = var.upload_datalake_filesystem
@@ -42,7 +51,7 @@ locals {
   upload_files = var.upload_files_enabled ? [
     for file in fileset("${path.module}/${var.upload_source_dir}", "**")
     : file
-    if length(regexall("(?i)\\.(csv|xlsx)$", file)) > 0
+    if length(regexall("(?i)\\.(csv|xlsx|parquet)$", file)) > 0
   ] : []
   sql_firewall_rules = var.sql_allow_azure_services ? concat([
     {
@@ -51,6 +60,7 @@ locals {
       end_ip   = "0.0.0.0"
     }
   ], var.sql_firewall_rules) : var.sql_firewall_rules
+  databricks_managed_rg_name = var.databricks_managed_rg_name != "" ? var.databricks_managed_rg_name : "${var.resource_group_name}-dbw-managed"
 }
 
 resource "azurerm_storage_blob" "uploaded" {
@@ -210,6 +220,33 @@ resource "azurerm_mssql_firewall_rule" "sql" {
   server_id           = azurerm_mssql_server.sql.id
   start_ip_address    = each.value.start_ip
   end_ip_address      = each.value.end_ip
+}
+
+############################################
+# Databricks (cluster + job)
+############################################
+
+resource "databricks_cluster" "etl_parquet" {
+  cluster_name            = "etl-parquet"
+  spark_version           = "13.3.x-scala2.12"
+  node_type_id            = "Standard_D4s_v5"
+  autoscale {
+    min_workers = 1
+    max_workers = 2
+  }
+  autotermination_minutes = 30
+}
+
+resource "databricks_job" "parquet_etl" {
+  name = "parquet-etl"
+
+  task {
+    task_key            = "parquet_etl_task"
+    existing_cluster_id = databricks_cluster.etl_parquet.id
+    notebook_task {
+      notebook_path = var.databricks_notebook_path
+    }
+  }
 }
 
 

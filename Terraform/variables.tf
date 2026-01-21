@@ -126,3 +126,32 @@ variable "sql_allow_azure_services" {
   default     = true
 }
 
+# Databricks
+variable "databricks_host" {
+  type        = string
+  description = "URL du workspace Databricks (ex: https://adb-xxxxxxxx.azuredatabricks.net)"
+}
+
+variable "databricks_token" {
+  type        = string
+  description = "Token PAT Databricks (a fournir via tfvars ou variable d'env)"
+  sensitive   = true
+}
+
+variable "databricks_notebook_path" {
+  type        = string
+  description = "Notebook Databricks a executer (ex: /Shared/parquet_etl)"
+  default     = "/Shared/parquet_etl"
+}
+
+variable "databricks_workspace_name" {
+  type        = string
+  description = "Nom du workspace Databricks a creer"
+}
+
+variable "databricks_managed_rg_name" {
+  type        = string
+  description = "Nom du resource group gere (managed RG) pour Databricks (si vide, derivé du RG principal)."
+  default     = ""
+}
+

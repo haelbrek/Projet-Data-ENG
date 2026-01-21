@@ -44,28 +44,9 @@ Sorties Terraform utilisées par les scripts :
 
 ## 3. Flux de données détaillé
 
-```
-Sources locales/API  -->  uploads/landing/* et data/communes.json
-      |                              |
-      +--> Terraform (upload_files_enabled=true) -----------------------------+
-                                                                              |
-                                                       +--> analytics/data_loader.py (lecture/sauvegarde locale)
-                                                       |
-                             Azure Data Lake Storage (filesystem raw)
-                                                       |
-                                                       +--> analytics/lib/data_prep.py
-                                                            (normalisation, enrichissements géographiques,
-                                                             création des tables stg_* et dim_*)
-                                                       |
-                                                       +--> analytics/export_to_sql.py
-                                                            (chargement par lots vers Azure SQL Database)
-                                                                              |
-                                                Azure SQL Database (dbo.stg_*, dbo.dim_*)
-                                                       |
-                                                       +--> API FastAPI (`analytics/api/`)
-                                                             - Endpoints `/tables/...`
-                                                             - Connexion SQL avec utilisateur dédié
-```
+Le diagramme complet du flux de données est disponible en **[Annexe A](#annexe-a--diagramme-du-flux-de-données)**.
+
+**Résumé** : Les sources (CSV, API) transitent par Terraform vers ADLS (`raw`), puis sont transformées par `data_prep.py` avant d'être chargées dans Azure SQL via `export_to_sql.py`. L'API FastAPI expose ensuite les données.
 
 Étapes :
 
@@ -145,3 +126,32 @@ Toutes les tables sont chargées dans Azure SQL via `to_sql`. Les colonnes textu
 ---
 
 _Dernière mise à jour : 2025-10-29_ (adapter manuellement lors des prochaines modifications).
+
+---
+
+# Annexes
+
+## Annexe A : Diagramme du flux de données
+
+```
+Sources locales/API  -->  uploads/landing/* et data/communes.json
+      |                              |
+      +--> Terraform (upload_files_enabled=true) -----------------------------+
+                                                                              |
+                                                       +--> analytics/data_loader.py (lecture/sauvegarde locale)
+                                                       |
+                             Azure Data Lake Storage (filesystem raw)
+                                                       |
+                                                       +--> analytics/lib/data_prep.py
+                                                            (normalisation, enrichissements géographiques,
+                                                             création des tables stg_* et dim_*)
+                                                       |
+                                                       +--> analytics/export_to_sql.py
+                                                            (chargement par lots vers Azure SQL Database)
+                                                                              |
+                                                Azure SQL Database (dbo.stg_*, dbo.dim_*)
+                                                       |
+                                                       +--> API FastAPI (`analytics/api/`)
+                                                             - Endpoints `/tables/...`
+                                                             - Connexion SQL avec utilisateur dédié
+```
