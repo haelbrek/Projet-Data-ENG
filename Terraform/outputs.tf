@@ -70,5 +70,10 @@ output "sql_database_id" {
   description = "ID de la base Azure SQL"
 }
 
+output "databricks_workspace_url" {
+  value       = azurerm_databricks_workspace.dbw.workspace_url
+  description = "URL du workspace Databricks cree"
+}
+
 
 

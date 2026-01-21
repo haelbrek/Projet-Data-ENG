@@ -22,76 +22,79 @@ upload_datalake_filesystem = "raw"
 Apres `apply`, les fichiers de `uploads/landing/` sont copies dans ADLS Gen2 (`raw`).
 
 ## 3. Recuperer les communes via le script fetch_communes.py
-1) Renseigner la chaine de connexion ADLS (apres recréation du compte, utiliser la nouvelle cle) :
-   - PowerShell :
-   ```powershell
-   $env:AZURE_STORAGE_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=adlselbrek;AccountKey=...;EndpointSuffix=core.windows.net"
-   ```
-   - Bash :
-   ```bash
-   export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=adlselbrek;AccountKey=...;EndpointSuffix=core.windows.net"
-   ```
-   - Pour recuperer la nouvelle chaine : Azure Portal > Storage account `adlselbrek` > Access keys > Connection string (cle1 ou cle2).
 
-2) Depuis le dossier `Terraform/`, lancer le script :
-```powershell
-python ..\ingestion\API\fetch_communes.py --container raw
-```
-ou en Bash :
-   ```bash
-   python ../ingestion/API/fetch_communes.py --container raw
-   ```
-Le script recupere les communes depuis l'API geo, transforme, puis deverse un JSON dans le filesystem `raw` du Data Lake.
+1) Configurer la variable d'environnement `AZURE_STORAGE_CONNECTION_STRING` (voir **[Annexe A](#annexe-a--configuration-des-variables-denvironnement)**).
+   - Recuperer la chaine : Azure Portal > Storage account `adlselbrek` > Access keys > Connection string.
 
-Notes :
-- Adapter `--departements` si besoin (ex: `--departements 59 62` ou `--departements ""` pour tout prendre).
-- `--datalake-path` permet de changer le chemin cible (par defaut `geo/communes-<timestamp>.json`).
-- En cas de changement de compte ADLS, regénérer la chaine de connexion et remettre la variable d'environnement avant de relancer.
+2) Lancer le script depuis `Terraform/` :
+   - `python ../ingestion/API/fetch_communes.py --container raw`
+
+Le script recupere les communes depuis l'API geo et deverse un JSON dans `raw`.
+
+**Options** : `--departements 59 62` (filtrer), `--datalake-path` (chemin cible).
 
 ## 4. Charger les donnees dans Azure SQL avant d'exposer l'API
-1) Depuis la racine du projet (ou en definissant `PYTHONPATH`), lancer l'export SQL :
-   ```powershell
-   python analytics/export_to_sql.py
-   ```
-   - Le script lit les creds dans `Terraform/terraform.tfvars` et/ou les variables `AZURE_SQL_*`.
-   - Prerequis : ODBC Driver 18/17 installe, firewall SQL ouvert pour ton IP.
 
-2) Une fois les tables chargees, demarrer l'API :
-   - PowerShell :
-   ```powershell
-   python -m uvicorn analytics.api.app.main:app --reload --port 8000
-   ```
-   - Bash :
-   ```bash
-   python -m uvicorn analytics.api.app.main:app --reload --port 8000
-   ```
-   Les endpoints `/tables/...` renverront alors les donnees depuis Azure SQL (ex: `/tables/dim_commune?limit=100`).
+1) Lancer l'export SQL : `python analytics/export_to_sql.py`
+   - Prerequis : ODBC Driver 18/17, firewall SQL ouvert.
+
+2) Demarrer l'API : `python -m uvicorn analytics.api.app.main:app --reload --port 8000`
+   - Endpoints disponibles : `/tables/dim_commune?limit=100`, etc.
 
 ## 5. Creer et alimenter la base SQL secondaire (_bis)
+
 ### 5.1 Provisionner la base secondaire
-- Terraform : un bloc `azurerm_mssql_database.sql_bis` cree la base `${sql_database_name}_bis`. Appliquer :
-  ```powershell
-  cd Terraform
-  terraform apply --auto-approve
-  ```
-  (ou cree la base manuellement sur le serveur `sqlelbrek-prod` avec le nom `<base>_bis`).
+Appliquer Terraform pour creer `${sql_database_name}_bis` : `cd Terraform && terraform apply --auto-approve`
 
 ### 5.2 Charger les donnees dans la base _bis
+Configurer les variables d'environnement SQL (voir **[Annexe B](#annexe-b--commandes-pour-la-base-_bis)**), puis :
+- `python analytics/export_to_sql_bis.py`
+- Mode preview : `--preview`
+
+### 5.3 Exporter la base _bis vers ADLS en Parquet
+- `python analytics/export_to_adls_bis.py --container raw --prefix sql-bis-parquet/`
+- Options : `--tables`, `--limit`, `--adls-connection-string`
+
+---
+
+# Annexes
+
+## Annexe A : Configuration des variables d'environnement
+
+**PowerShell** :
+```powershell
+$env:AZURE_STORAGE_CONNECTION_STRING = "DefaultEndpointsProtocol=https;AccountName=adlselbrek;AccountKey=...;EndpointSuffix=core.windows.net"
+```
+
+**Bash** :
+```bash
+export AZURE_STORAGE_CONNECTION_STRING="DefaultEndpointsProtocol=https;AccountName=adlselbrek;AccountKey=...;EndpointSuffix=core.windows.net"
+```
+
+## Annexe B : Commandes pour la base _bis
+
+**Configuration des variables SQL (PowerShell)** :
 ```powershell
 $env:AZURE_SQL_SERVER = "sqlelbrek-prod.database.windows.net"
 $env:AZURE_SQL_DATABASE_BIS = "<nom_base>_bis"   # ex: projet_data_eng_bis
 $env:AZURE_SQL_USERNAME = "sqladmin"
 $env:AZURE_SQL_PASSWORD = "<motdepasse>"
+```
+
+**Configuration des variables SQL (Bash)** :
+```bash
+export AZURE_SQL_SERVER="sqlelbrek-prod.database.windows.net"
+export AZURE_SQL_DATABASE_BIS="<nom_base>_bis"
+export AZURE_SQL_USERNAME="sqladmin"
+export AZURE_SQL_PASSWORD="<motdepasse>"
+```
+
+**Commande d'export** :
+```powershell
 python analytics/export_to_sql_bis.py
 ```
-- Mode preview : `python analytics/export_to_sql_bis.py --preview` (aucun chargement).
-- Les tables sont les memes que pour la base principale.
 
-### 5.3 Exporter la base _bis vers ADLS en Parquet (source BDD dans le Data Lake)
-- Prerequis : chaine ADLS definie (`ADLS_CONNECTION_STRING` ou `AZURE_STORAGE_CONNECTION_STRING`) et conteneur/filesystem `raw` existe.
-- Commande :
-  ```powershell
-  # vers raw/sql-bis-parquet/<table>.parquet
-  python analytics/export_to_adls_bis.py --container raw --prefix sql-bis-parquet/
-  ```
-  Options : `--tables` pour cibler, `--limit` pour echantillonner, `--adls-connection-string` pour passer la chaine en CLI.
+**Export vers ADLS en Parquet** :
+```powershell
+python analytics/export_to_adls_bis.py --container raw --prefix sql-bis-parquet/
+```

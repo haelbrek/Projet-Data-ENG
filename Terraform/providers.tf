@@ -6,6 +6,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "3.46.0"
     }
+    databricks = {
+      source  = "databricks/databricks"
+      version = "~> 1.58.0"
+    }
   }
 }
 
@@ -14,4 +18,8 @@ provider "azurerm" {
   features {}
 }
 
-# Aucun autre provider requis
+# Provider Databricks (necessite le host et un PAT)
+provider "databricks" {
+  host  = var.databricks_host
+  token = var.databricks_token
+}
