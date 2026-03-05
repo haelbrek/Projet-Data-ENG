@@ -127,15 +127,23 @@ variable "sql_allow_azure_services" {
 }
 
 # Databricks
+variable "create_databricks" {
+  type        = bool
+  description = "Activer la creation du workspace Databricks et de ses ressources (cluster, job)"
+  default     = false
+}
+
 variable "databricks_host" {
   type        = string
   description = "URL du workspace Databricks (ex: https://adb-xxxxxxxx.azuredatabricks.net)"
+  default     = ""
 }
 
 variable "databricks_token" {
   type        = string
   description = "Token PAT Databricks (a fournir via tfvars ou variable d'env)"
   sensitive   = true
+  default     = ""
 }
 
 variable "databricks_notebook_path" {
@@ -147,11 +155,18 @@ variable "databricks_notebook_path" {
 variable "databricks_workspace_name" {
   type        = string
   description = "Nom du workspace Databricks a creer"
+  default     = ""
 }
 
 variable "databricks_managed_rg_name" {
   type        = string
-  description = "Nom du resource group gere (managed RG) pour Databricks (si vide, derivé du RG principal)."
+  description = "Nom du resource group gere (managed RG) pour Databricks (si vide, derive du RG principal)."
+  default     = ""
+}
+
+variable "databricks_single_user" {
+  type        = string
+  description = "Email Azure AD du proprietaire du cluster Databricks (SINGLE_USER mode)."
   default     = ""
 }
 

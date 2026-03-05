@@ -18,8 +18,9 @@ provider "azurerm" {
   features {}
 }
 
-# Provider Databricks (necessite le host et un PAT)
+# Provider Databricks (utilise seulement si create_databricks = true)
+# Si desactive, host et token peuvent rester vides
 provider "databricks" {
-  host  = var.databricks_host
-  token = var.databricks_token
+  host  = var.databricks_host != "" ? var.databricks_host : "https://placeholder.azuredatabricks.net"
+  token = var.databricks_token != "" ? var.databricks_token : "placeholder"
 }

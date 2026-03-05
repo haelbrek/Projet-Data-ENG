@@ -28,8 +28,9 @@ resource "azurerm_storage_data_lake_gen2_filesystem" "zones" {
   storage_account_id = azurerm_storage_account.datalake.id
 }
 
-# Workspace Databricks (Azure)
+# Workspace Databricks (Azure) - optionnel
 resource "azurerm_databricks_workspace" "dbw" {
+  count                       = var.create_databricks ? 1 : 0
   name                        = var.databricks_workspace_name
   resource_group_name         = azurerm_resource_group.rg.name
   location                    = azurerm_resource_group.rg.location
@@ -223,13 +224,18 @@ resource "azurerm_mssql_firewall_rule" "sql" {
 }
 
 ############################################
-# Databricks (cluster + job)
+# Databricks (cluster + job) - optionnel
+# Activer avec create_databricks = true dans terraform.tfvars
+# Prerequis : databricks_host et databricks_token doivent etre renseignes
 ############################################
 
 resource "databricks_cluster" "etl_parquet" {
+  count                   = var.create_databricks ? 1 : 0
   cluster_name            = "etl-parquet"
   spark_version           = "13.3.x-scala2.12"
   node_type_id            = "Standard_D4s_v5"
+  data_security_mode      = "SINGLE_USER"
+  single_user_name        = var.databricks_single_user
   autoscale {
     min_workers = 1
     max_workers = 2
@@ -238,11 +244,12 @@ resource "databricks_cluster" "etl_parquet" {
 }
 
 resource "databricks_job" "parquet_etl" {
-  name = "parquet-etl"
+  count = var.create_databricks ? 1 : 0
+  name  = "parquet-etl"
 
   task {
     task_key            = "parquet_etl_task"
-    existing_cluster_id = databricks_cluster.etl_parquet.id
+    existing_cluster_id = databricks_cluster.etl_parquet[0].id
     notebook_task {
       notebook_path = var.databricks_notebook_path
     }

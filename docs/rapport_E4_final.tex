@@ -1,0 +1,1752 @@
+\documentclass[12pt,a4paper]{article}
+
+% ─── Encodage et langue ──────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% ─── Mise en page ────────────────────────────────────────────────────────────
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+
+% ─── Polices ─────────────────────────────────────────────────────────────────
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amssymb}
+
+% ─── Couleurs ────────────────────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+
+% ─── TikZ (schémas) ──────────────────────────────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, shadows}
+
+% ─── Images ──────────────────────────────────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{screenshots/}}   % Dossier contenant vos captures d'écran
+\usepackage{float}
+
+% ─── Boîte "capture manquante" ───────────────────────────────────────────────
+% Commande utilitaire : affiche un cadre gris avec le nom du fichier attendu
+% et les instructions. À supprimer une fois la vraie image insérée.
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+% Commande \screenshotTODO{fichier.png}{description}
+% - Si screenshots/fichier.png existe : affiche l'image
+% - Sinon : affiche le bloc jaune TODO
+\newcommand{\screenshotTODO}[2]{%
+  \IfFileExists{screenshots/#1}{%
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.95\linewidth]{#1}
+      \caption{\textit{#2}}
+    \end{figure}
+  }{%
+    \begin{tcolorbox}[
+        colback=yellow!10, colframe=BurntOrange!80,
+        fonttitle=\bfseries\small, title={TODO -- Capture d'écran à ajouter},
+        left=4pt, right=4pt, top=4pt, bottom=4pt
+    ]
+    \textbf{Fichier attendu :} \texttt{screenshots/#1}\\
+    \textbf{Ce qu'il faut capturer :} #2
+    \end{tcolorbox}
+  }%
+}
+
+% ─── Tableaux ────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{placeins}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% ─── Code source ─────────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{lstautogobble}
+
+\definecolor{codegreen}{rgb}{0.2,0.6,0.2}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.1,0.1,0.7}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{darkblue}{RGB}{30,80,160}
+\definecolor{successgreen}{RGB}{20,130,60}
+\definecolor{dimgreen}{RGB}{20,100,50}
+\definecolor{factbg}{RGB}{20,25,50}
+\definecolor{azure}{RGB}{0,127,255}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{BrickRed},
+    basicstyle=\ttfamily\small,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{gray!40},
+    autogobble=true
+}
+\lstset{style=mystyle}
+
+% ─── Hyperliens ──────────────────────────────────────────────────────────────
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue, citecolor=NavyBlue]{hyperref}
+
+% ─── En-têtes / pieds de page ────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Épreuve E4 -- Certification Data Engineer}
+\fancyhead[R]{\small EL BREK HAMZA}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ─── Numérotation ────────────────────────────────────────────────────────────
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+
+% ─── Page de titre ───────────────────────────────────────────────────────────
+\begin{center}
+    \vspace*{1cm}
+    {\Large Réalisation d'un service numérique de données territoriales}\\[0.4cm]
+    {\large Épreuve E4 -- Certification Data Engineer}\\[1cm]
+    {\large \textbf{EL BREK HAMZA}}\\[0.3cm]
+    {\normalsize 21 janvier 2026}
+\end{center}
+
+\vspace{1cm}
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Introduction générale}
+\addcontentsline{toc}{section}{Introduction générale}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Dans un contexte de transformation numérique accélérée, les établissements bancaires s'appuient sur la donnée pour piloter leurs décisions stratégiques. L'exploitation de données fiables, structurées et à jour constitue un levier essentiel pour le développement de nouveaux services et la croissance à long terme.
+
+L'entreprise s'inscrit dans un plan stratégique à horizon 2030, dont l'expansion territoriale constitue l'un des axes majeurs. Cette orientation nécessite une connaissance approfondie des territoires ciblés à travers l'analyse de leurs caractéristiques socio-économiques, démographiques et géographiques.
+
+Le présent projet vise à concevoir un service numérique permettant la collecte, le traitement, le stockage et la mise à disposition de données territoriales issues de sources hétérogènes. Ces données alimentent des études destinées à accompagner la prise de décision des équipes métiers et techniques.
+
+Ce projet mobilise cinq compétences clés en data engineering :
+\begin{itemize}
+    \item \textbf{C8} : Automatisation de l'extraction depuis sources multiples
+    \item \textbf{C9} : Développement de requêtes SQL optimisées
+    \item \textbf{C10} : Agrégation et normalisation des données
+    \item \textbf{C11} : Création et modélisation de base de données
+    \item \textbf{C12} : Exposition des données via API REST
+\end{itemize}
+
+Il a été développé dans le respect des contraintes techniques et réglementaires, notamment la conformité RGPD.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Architecture globale du service numérique}
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Architecture du dépôt GitHub}
+
+Le code source est hébergé sur GitHub : \url{https://github.com/haelbrek/Projet-Data-ENG}.
+
+
+% Une fois la capture faite, remplacez le bloc ci-dessus par :
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\linewidth]{github_repo.png}
+%     \caption{Structure du dépôt GitHub haelbrek/Projet-Data-ENG}
+% \end{figure}
+
+
+\textbf{Structure organisée en couches fonctionnelles :}
+\begin{itemize}
+    \item \texttt{ingestion/} : Scripts de collecte depuis API REST et scraping
+    \item \texttt{analytics/} : Scripts de transformation et export SQL
+    \item \texttt{data/} : Stockage local temporaire des données collectées
+    \item \texttt{docs/} : Documentation technique et procédures
+\end{itemize}
+
+
+\subsection{Vue d'ensemble de l'architecture}
+
+L'architecture suit un pipeline classique ETL (Extract, Transform, Load) :
+
+\begin{itemize}
+    \item \textbf{Couche 1 -- Extraction} : Collecte automatisée depuis sources hétérogènes (API Géo, CSV institutionnels, scraping Meilleurtaux).
+    \item \textbf{Couche 2 -- Transformation} : Nettoyage, agrégation et normalisation via Python/Pandas dans des scripts dédiés.
+    \item \textbf{Couche 3 -- Stockage} : Modélisation relationnelle et import dans Azure SQL Database.
+    \item \textbf{Couche 4 -- Exposition} : API REST FastAPI pour mise à disposition sécurisée aux applications consommatrices.
+\end{itemize}
+
+\subsection{Choix technologiques}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{L{3cm} L{4cm} L{6cm}}
+    \toprule
+    \textbf{Composant} & \textbf{Technologie} & \textbf{Justification} \\
+    \midrule
+    Base de données & Azure SQL Database & SGBDR robuste, sauvegardes auto \\
+    Extraction/Transform & Python 3.10+ & Écosystème riche (pandas, requests) \\
+    API REST & FastAPI & Performance, documentation auto \\
+    Sécurité & Azure Key Vault & Gestion centralisée des secrets \\
+    Versionnement & Git/GitHub & Collaboration, traçabilité \\
+    \bottomrule
+\end{tabular}
+\caption{Stack technologique du projet}
+\end{table}
+
+\subsection{Description des composants du système}
+
+\textbf{Azure SQL Database} : Base relationnelle hébergeant le modèle final (tables normalisées MERISE). Configuration Basic pour le volume ($<$100k lignes).
+
+\textbf{Scripts Python} : Modules d'extraction (\texttt{fetch\_communes.py}), transformation (\texttt{data\_prep.py}) et export (\texttt{export\_to\_sql.py}).
+
+\textbf{API FastAPI} : Service REST exposant les endpoints de consultation avec authentification par clé API.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{C8 -- Automatisation de l'extraction des données}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Identification et description des sources de données}
+
+Cinq types de sources ont été exploitées, couvrant des formats et des origines variées. Le schéma ci-dessous présente leur organisation et leur convergence vers l'Azure Data Lake Storage Gen2.
+
+% ── Schéma des sources de données ────────────────────────────────────────────
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    node distance = 0.7cm and 1.8cm,
+    % styles de boîtes
+    src/.style    = {rectangle, rounded corners=5pt, draw, minimum width=3.2cm,
+                     minimum height=0.85cm, align=center, font=\small\bfseries,
+                     drop shadow},
+    proc/.style   = {rectangle, rounded corners=4pt, draw=NavyBlue, fill=NavyBlue!12,
+                     minimum width=3.2cm, minimum height=0.85cm, align=center,
+                     font=\small, drop shadow},
+    lake/.style   = {rectangle, rounded corners=6pt, draw=teal, fill=teal!15,
+                     minimum width=3.6cm, minimum height=1.1cm, align=center,
+                     font=\small\bfseries, drop shadow},
+    arrow/.style  = {-Stealth, thick},
+    arrowb/.style = {-Stealth, thick, NavyBlue},
+]
+
+% ── Colonne 1 : Sources ───────────────────────────────────────────────────────
+\node[src, fill=orange!15,  draw=BurntOrange] (csv)
+    {CSV INSEE\\{\footnotesize data.gouv.fr}};
+
+\node[src, fill=green!12,   draw=OliveGreen, below=of csv] (api)
+    {API REST\\{\footnotesize geo.api.gouv.fr}};
+
+\node[src, fill=purple!12,  draw=Plum,       below=of api] (scrap)
+    {Scraping Web\\{\footnotesize Meilleurtaux}};
+
+\node[src, fill=cyan!15,    draw=ProcessBlue, below=of scrap] (parquet)
+    {\textbf{Fichiers Parquet}\\{\footnotesize Databricks (Big Data)}};
+
+\node[src, fill=red!10,     draw=BrickRed,   below=of parquet] (bdd)
+    {\textbf{Azure SQL}\\{\footnotesize projet\_data\_eng\_bis}};
+
+% ── Colonne 2 : Étapes intermédiaires ────────────────────────────────────────
+\node[proc, right=of csv]    (py_csv)   {Python\\pandas};
+\node[proc, right=of api]    (py_api)   {Python\\requests};
+\node[proc, right=of scrap]  (py_scrap) {Python\\beautifulsoup4};
+
+\node[proc, right=of parquet] (databricks)
+    {Databricks\\{\footnotesize lecture + transformation}};
+
+\node[proc, right=of bdd]    (py_bdd)
+    {Python\\{\footnotesize SQLAlchemy / pyodbc}};
+
+% ── Colonne 3 : Data Lake ────────────────────────────────────────────────────
+\node[lake, right=6.5cm of api] (adls)
+    {Azure Data Lake\\Storage Gen2\\[2pt]
+     {\footnotesize \texttt{raw/} \quad \texttt{staging/} \quad \texttt{curated/}}};
+
+% ── Flèches sources → traitement ─────────────────────────────────────────────
+\draw[arrow, BurntOrange]  (csv)     -- (py_csv);
+\draw[arrow, OliveGreen]   (api)     -- (py_api);
+\draw[arrow, Plum]         (scrap)   -- (py_scrap);
+\draw[arrow, ProcessBlue]  (parquet) -- (databricks);
+\draw[arrow, BrickRed]     (bdd)     -- (py_bdd);
+
+% ── Flèches traitement → ADLS ────────────────────────────────────────────────
+\draw[arrowb] (py_csv)      -| (adls);
+\draw[arrowb] (py_api)      -- (adls);
+\draw[arrowb] (py_scrap)    -| (adls);
+\draw[arrowb] (databricks)  -| (adls);
+\draw[arrowb] (py_bdd)      -| (adls);
+
+% ── Légende ──────────────────────────────────────────────────────────────────
+\node[draw=gray!50, fill=gray!5, rounded corners=3pt,
+      below=0.6cm of bdd, font=\footnotesize,
+      text width=5.5cm, align=left, inner sep=5pt]
+    {\textbf{L\'{e}gende}\\[2pt]
+     {\color{BurntOrange}$\blacksquare$} Sources existantes\\[1pt]
+     {\color{ProcessBlue}$\blacksquare$} Nouvelle source Big Data (Parquet)\\[1pt]
+     {\color{BrickRed}$\blacksquare$} Azure SQL Database (\texttt{projet\_data\_eng\_bis})};
+
+\end{tikzpicture}
+\caption{Structure complète des sources de données et flux vers l'Azure Data Lake}
+\end{figure}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{1. Fichiers CSV institutionnels} (11 fichiers depuis \textit{insee.fr} et \textit{data.gouv.fr}) :
+\begin{itemize}
+    \item Démographie (naissances, décès, fécondité)
+    \item Structure des ménages, emploi et chômage
+    \item Revenus et niveau de vie (FILOSOFI)
+    \item Logement et création d'entreprises
+\end{itemize}
+
+\textbf{2. API REST géographique} (\textit{geo.api.gouv.fr}) : Informations sur les communes françaises (code, population, surface, rattachement administratif, coordonnées).
+
+\textbf{3. Scraping web} (\textit{Meilleurtaux}) : Baromètres de taux de crédit immobilier par région et durée.
+
+\textbf{4. Source Big Data -- Fichiers Parquet SIRENE (Databricks)} :
+
+Le fichier \texttt{StockEtablissement\_utf8.parquet} issu du répertoire SIRENE (INSEE) recense l'ensemble des établissements français ($>$ 30 millions de lignes, 53 colonnes). Il est stocké dans la zone \texttt{raw/Parquet/} de l'Azure Data Lake Storage Gen2 et traité via un notebook PySpark dans Databricks. Le processus est le suivant :
+
+\begin{enumerate}
+    \item \textbf{Récupération} : lecture du fichier Parquet depuis \texttt{raw/Parquet/} de l'ADLS Gen2 (\texttt{adlselbrek2025}) via le protocole \texttt{abfss://} ;
+    \item \textbf{Sélection} : réduction de 53 à 21 colonnes essentielles (identifiants, activité, adresse, effectifs) ;
+    \item \textbf{Filtrage} : conservation des seuls établissements \textbf{actifs} (\texttt{etatAdministratifEtablissement = 'A'}) et localisés en \textbf{Hauts-de-France} (départements 02, 59, 60, 62, 80) ;
+    \item \textbf{Nettoyage} : suppression automatique des colonnes entièrement vides, conversion des dates en type \texttt{date}, renommage en \texttt{snake\_case} ;
+    \item \textbf{Enrichissement} : ajout des colonnes \texttt{code\_departement}, \texttt{nom\_departement}, \texttt{region} et \texttt{date\_traitement} ;
+    \item \textbf{Stockage} : écriture partitionnée par département dans la zone \texttt{curated/etablissements\_hdf\_actifs/} de l'ADLS Gen2.
+\end{enumerate}
+
+\begin{lstlisting}[language=Python, caption=Extrait -- Filtrage et sauvegarde SIRENE (code complet en Annexe~B.4)]
+# Filtre : etablissements actifs en Hauts-de-France
+df = df_raw.filter(col("etatAdministratifEtablissement") == "A")
+df = df.filter(substring(col("codeCommuneEtablissement"),1,2)
+               .isin(["02","59","60","62","80"]))
+# Sauvegarde partitionnee dans la zone curated
+df.write.mode("overwrite").partitionBy("code_departement") \
+    .parquet("abfss://curated@adlselbrek2025.dfs.core.windows.net"
+             "/etablissements_hdf_actifs/")
+\end{lstlisting}
+
+\textit{Le notebook complet (11 cellules) est disponible en \textbf{Annexe~\ref{annexe:parquet_etl}}, page~\pageref{annexe:parquet_etl}.}
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE : Notebook Databricks -- resultats ETL SIRENE                 │
+% │  Fichier : screenshots/databricks_notebook_results.png                 │
+% └─────────────────────────────────────────────────────────────────────────┘
+\screenshotTODO{databricks\_notebook\_results.png}{%
+    Capture du notebook Databricks \texttt{/Shared/parquet\_etl} montrant :
+    \textbf{(1)} les logs d'exécution avec le nombre de lignes après chaque filtre,
+    \textbf{(2)} le tableau \texttt{display(df.limit(20))} avec les colonnes renommées,
+    \textbf{(3)} la répartition par département (groupBy).
+}
+
+\textbf{Résultat :} Le fichier brut de 30+ millions de lignes est réduit à quelques centaines de milliers d'établissements actifs en Hauts-de-France, stockés proprement dans la zone \texttt{curated/} du Data Lake, partitionnés par département pour des requêtes optimisées.
+
+\textbf{Intérêt :} Le format Parquet offre une compression efficace et un accès colonnaire rapide, particulièrement adapté aux grands volumes de données ($>$ 1 million de lignes).
+
+\textbf{5. Source Azure SQL Database -- \texttt{projet\_data\_eng\_bis}} :
+
+La base de données \textbf{Azure SQL} \texttt{projet\_data\_eng\_bis}, hébergée sur le serveur \texttt{sqlelbrek-prod2.database.windows.net}, constitue la cinquième source d'alimentation du Data Lake. Elle contient les données territoriales structurées (population, emploi, logement, naissances, décès, etc.) organisées en tables de staging. Ces données sont extraites via Python (\texttt{SQLAlchemy} / \texttt{pyodbc}) et exportées au format Parquet vers la zone \texttt{raw/sql-bis/} de l'ADLS Gen2.
+
+\textbf{Tables exportées :} \texttt{dim\_commune}, \texttt{stg\_population}, \texttt{stg\_creation\_entreprises}, \texttt{stg\_deces}, \texttt{stg\_emploi\_chomage}, \texttt{stg\_fecondite}, \texttt{stg\_filosofi}, \texttt{stg\_logement}, \texttt{stg\_menage}, \texttt{stg\_naissances} (13 tables au total).
+
+\begin{lstlisting}[language=Python, caption=Extrait -- Export Azure SQL vers ADLS Parquet (code complet en Annexe~B.5)]
+# Connexion a Azure SQL (projet_data_eng_bis sur sqlelbrek-prod2)
+engine = create_engine("mssql+pyodbc://sqladmin:***@sqlelbrek-prod2"
+                       ".database.windows.net/projet_data_eng_bis?...")
+# Export de chaque table en Parquet vers raw/sql-bis/
+for table in TABLES:
+    df = pd.read_sql(f"SELECT * FROM dbo.{table}", engine)
+    blob_client.upload_blob(df.to_parquet(), overwrite=True)
+    # -> raw/sql-bis/{table}.parquet
+\end{lstlisting}
+
+\textit{Le script complet (\texttt{analytics/sql\_to\_adls\_bis.py}) est disponible en \textbf{Annexe~\ref{annexe:bdd_locale}}, page~\pageref{annexe:bdd_locale}.}
+
+\textbf{Intérêt :} Cette source permet d'enrichir les données territoriales publiques avec des informations métier internes, offrant une vision consolidée pour les analyses stratégiques.
+
+\subsection{Spécifications techniques de l'extraction}
+
+\textbf{Technologies utilisées :}
+\begin{itemize}
+    \item Langage : Python 3.10+ / PySpark (Databricks)
+    \item Bibliothèques : requests, pandas, beautifulsoup4, SQLAlchemy, pyodbc, azure-storage-file-datalake, pyspark
+    \item Stockage temporaire : Fichiers JSON, CSV et Parquet locaux
+\end{itemize}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{L{3.2cm} L{2.5cm} L{2.5cm} L{4.5cm}}
+    \toprule
+    \textbf{Source} & \textbf{Format} & \textbf{Outil} & \textbf{Destination ADLS} \\
+    \midrule
+    CSV INSEE & CSV & pandas & \texttt{raw/csv/} \\
+    API Géo & JSON & requests & \texttt{raw/geo/} \\
+    Scraping Meilleurtaux & Excel/JSON & beautifulsoup4 & \texttt{raw/scraping/} \\
+    \textbf{SIRENE Parquet (Databricks)} & \textbf{Parquet} & \textbf{PySpark} & \textbf{\texttt{curated/etablissements\_hdf\_actifs/}} \\
+    \textbf{Azure SQL (\texttt{projet\_data\_eng\_bis})} & \textbf{Parquet} & \textbf{SQLAlchemy/pyodbc} & \textbf{\texttt{raw/sql-bis/}} \\
+    \bottomrule
+\end{tabular}
+\caption{Récapitulatif des sources et formats d'extraction}
+\end{table}
+
+\textbf{Processus d'extraction API :} Requêtes HTTP GET paramétrées par département $\to$ Parsing JSON $\to$ Sauvegarde locale.
+
+\textbf{Processus de scraping :} Requêtes AJAX simulées $\to$ Parsing JSON $\to$ Structuration et export Excel.
+
+\textbf{Processus SIRENE Parquet (Databricks) :} Lecture \texttt{StockEtablissement\_utf8.parquet} depuis \texttt{raw/Parquet/} $\to$ Filtre établissements actifs $\to$ Filtre Hauts-de-France (02/59/60/62/80) $\to$ Nettoyage colonnes vides $\to$ Enrichissement (département, région, date) $\to$ Écriture partitionnée dans \texttt{curated/etablissements\_hdf\_actifs/}.
+
+\textbf{Processus Azure SQL (\texttt{projet\_data\_eng\_bis}) :} Connexion pyodbc $\to$ \texttt{SELECT * FROM dbo.\{table\}} $\to$ Export Parquet $\to$ Upload ADLS \texttt{raw/sql-bis/}.
+
+\subsection{Scripts d'extraction des données}
+
+Le script principal \texttt{ingestion/API/fetch\_communes.py} assure la collecte des données communales depuis l'API Géo gouvernementale. Il supporte également l'upload vers Azure Data Lake Storage Gen2.
+
+\textbf{Extrait -- Fonction principale d'extraction :}
+
+\begin{lstlisting}[language=Python]
+def fetch_communes(departements, container='raw',
+                   datalake_path='geo', local_output=None):
+    """Collecte communes depuis API Geo gouvernementale"""
+    for dept in departements:
+        url = f"https://geo.api.gouv.fr/departements/{dept}/communes"
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        # Sauvegarde locale et upload ADLS...
+\end{lstlisting}
+
+\textbf{Fonctionnalités clés :}
+\begin{itemize}
+    \item Arguments CLI pour paramétrage flexible
+    \item Gestion erreurs HTTP (timeout, retry logic)
+    \item Logging détaillé des opérations
+    \item Sauvegarde locale JSON et upload ADLS
+\end{itemize}
+
+Le code source complet est disponible en \textbf{Annexe B.1}.
+
+\subsection{Automatisation et pérennisation de la collecte}
+
+\textbf{Exécution reproductible :}
+
+\begin{lstlisting}[language=bash]
+# Definir la variable d'environnement
+export AZURE_STORAGE_CONNECTION_STRING="<connection-string>"
+
+# Executer l'extraction
+python ingestion/API/fetch_communes.py \
+    --departements 02 59 60 62 80 \
+    --container raw --local-output data
+\end{lstlisting}
+
+\textbf{Résultats attendus :}
+\begin{itemize}
+    \item Fichiers locaux : \texttt{data/communes\_02.json}, \texttt{data/communes\_59.json}, etc.
+    \item Upload ADLS : \texttt{raw/geo/communes\_02.json}, etc.
+    \item Total communes Hauts-de-France : environ 2 287 communes
+\end{itemize}
+
+\subsection{Gestion des erreurs et des exceptions}
+
+Le script implémente une gestion robuste des erreurs via des blocs \texttt{try/except} couvrant les cas de timeout, erreurs HTTP et formats JSON invalides. Tous les événements sont journalisés avec timestamp pour faciliter le débogage.
+
+\textbf{Extrait -- Gestion des exceptions :}
+
+\begin{lstlisting}[language=Python]
+try:
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
+except requests.exceptions.Timeout:
+    logger.error(f"Timeout pour departement {dept}")
+    continue
+except requests.exceptions.HTTPError as e:
+    logger.error(f"Erreur HTTP {e.response.status_code}")
+    continue
+\end{lstlisting}
+
+\subsection{Versionnement et accès au dépôt Git}
+
+L'ensemble des scripts est versionné sur GitHub : \url{https://github.com/haelbrek/Projet-Data-ENG}
+
+\textbf{Organisation :}
+\begin{itemize}
+    \item \texttt{ingestion/API/} : Scripts d'extraction API
+    \item \texttt{ingestion/scraping/} : Scripts de scraping web
+    \item \texttt{requirements.txt} : Dépendances Python
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{C9 -- Requêtes SQL pour la collecte des données}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Présentation du système interrogé}
+
+Après import dans Azure SQL Database, les données sont interrogées via SQL pour vérification, extraction de sous-ensembles et agrégations statistiques.
+
+\subsection{Requêtes SQL de collecte}
+
+\textbf{Requête 1 : Collecte des communes par département}
+
+Cette requête récupère les informations des communes avec leurs rattachements administratifs pour les départements des Hauts-de-France :
+
+\begin{lstlisting}[language=SQL]
+SELECT c.code AS code_commune, c.nom AS nom_commune,
+       c.population, d.nom AS departement, r.nom AS region
+FROM communes c
+INNER JOIN departements d ON c.code_departement = d.code
+INNER JOIN regions r ON d.code_region = r.code
+WHERE d.code IN ('02', '59', '60', '62', '80')
+ORDER BY c.population DESC;
+\end{lstlisting}
+
+\textbf{Requête 2 : Statistiques agrégées par région}
+
+\begin{lstlisting}[language=SQL]
+SELECT r.nom AS region, COUNT(c.code) AS nb_communes,
+       SUM(c.population) AS population_totale,
+       AVG(c.population) AS population_moyenne
+FROM regions r
+LEFT JOIN departements d ON r.code = d.code_region
+LEFT JOIN communes c ON d.code = c.code_departement
+GROUP BY r.nom HAVING COUNT(c.code) > 0;
+\end{lstlisting}
+
+\subsection{Choix de sélection, filtrage et jointures}
+
+\textbf{Sélection} : Uniquement colonnes nécessaires pour optimiser la bande passante.
+
+\textbf{Filtrage} : Clause \texttt{WHERE} sur codes départements (Hauts-de-France).
+
+\textbf{Jointures} : \texttt{INNER JOIN} entre tables normalisées basées sur clés primaires/étrangères.
+
+\subsection{Optimisation des requêtes SQL}
+
+Des index ont été créés sur les colonnes de jointure pour améliorer les performances :
+
+\begin{lstlisting}[language=SQL]
+CREATE INDEX idx_communes_dept ON communes(code_departement);
+CREATE INDEX idx_departements_region ON departements(code_region);
+\end{lstlisting}
+
+\textbf{Impact mesuré :} Temps d'exécution réduit de 2.1s à 0.3s (amélioration de 7x).
+
+\subsection{Documentation des requêtes}
+
+Chaque requête est documentée dans \texttt{docs/sql\_queries.md} avec objectif, tables impliquées et optimisations appliquées.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{C10 -- Agrégation, nettoyage et normalisation des données}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Présentation du processus d'agrégation}
+
+Les données provenant de sources hétérogènes nécessitent une phase d'agrégation pour produire un jeu unique et cohérent. Le module \texttt{analytics/lib/data\_prep.py} centralise ces traitements.
+
+\subsection{Script d'agrégation des données}
+
+Le script de préparation effectue les opérations suivantes en séquence :
+\begin{enumerate}
+    \item Lecture des fichiers JSON depuis l'API Géo
+    \item Lecture et fusion des fichiers CSV supplémentaires
+    \item Nettoyage (suppression doublons, valeurs manquantes, aberrantes)
+    \item Normalisation des formats
+    \item Export du fichier consolidé
+\end{enumerate}
+
+\textbf{Extrait -- Fusion et nettoyage :}
+
+\begin{lstlisting}[language=Python]
+# Fusion sur code commune
+df_merged = pd.merge(communes_api, communes_csv,
+                     on='code', how='outer')
+
+# Suppression doublons
+df_clean = df_merged.drop_duplicates(subset='code', keep='first')
+
+# Filtrage valeurs aberrantes
+df_clean = df_clean[(df_clean['population'] >= 0) &
+                    (df_clean['population'] < 3000000)]
+\end{lstlisting}
+
+Le code source complet est disponible en \textbf{Annexe B.2}.
+
+\subsection{Nettoyage des données}
+
+\textbf{Suppressions appliquées :}
+\begin{itemize}
+    \item \textbf{Doublons} : 127 doublons supprimés via \texttt{drop\_duplicates}
+    \item \textbf{Valeurs manquantes} : 15 lignes retirées (\texttt{dropna})
+    \item \textbf{Valeurs aberrantes} : Populations négatives ou $>$3M filtrées
+\end{itemize}
+
+\subsection{Homogénéisation et normalisation}
+
+\textbf{Standardisation appliquée :}
+\begin{itemize}
+    \item Colonnes renommées en \texttt{snake\_case}
+    \item Dates au format ISO 8601
+    \item Types numériques forcés via \texttt{pd.to\_numeric}
+    \item Codes postaux formatés sur 5 caractères
+\end{itemize}
+
+\subsection{Documentation et exécution}
+
+\begin{lstlisting}[language=bash]
+pip install -r requirements.txt
+python analytics/lib/data_prep.py
+\end{lstlisting}
+
+\subsection{Conformité RGPD}
+
+Les sources utilisées fournissent exclusivement des données publiques agrégées. Aucune donnée personnelle identifiable n'est collectée.
+
+\textbf{Registre} : Vide, confirmant l'absence de traitement de données personnelles.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{C11 -- Création et alimentation de la base de données}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Modélisation MERISE}
+
+La modélisation des données suit la méthode \textbf{MERISE} en trois niveaux d'abstraction progressifs : conceptuel, logique puis physique. Cette démarche garantit la cohérence du modèle depuis l'expression des besoins métier jusqu'à l'implémentation technique dans Azure SQL Database.
+
+% ─── MCD ──────────────────────────────────────────────────────────────────────
+\subsubsection{Modèle Conceptuel de Données (MCD)}
+
+Le \textbf{Modèle Conceptuel de Données} représente les entités du domaine métier et leurs associations, indépendamment de toute considération technique. Il identifie les objets clés du projet (communes, indicateurs démographiques, entreprises, etc.) ainsi que les cardinalités liant ces entités. Ce niveau purement sémantique sert de base de communication entre les parties prenantes et guide la conception des niveaux suivants.
+
+ \begin{figure}[H]
+     \centering
+     \includegraphics[width=0.85\linewidth]{screenshots/MCD — Modèle Conceptuel des Données.png}
+     \caption{Schéma MCD -- Modélisation MERISE de la base de données}
+ \end{figure}
+
+% ─── MLD ──────────────────────────────────────────────────────────────────────
+\subsubsection{Modèle Logique de Données (MLD)}
+
+Le \textbf{Modèle Logique de Données} traduit le MCD en un ensemble de relations tabulaires selon le modèle relationnel. Les clés primaires sont soulignées (\underline{PK}), les clés étrangères sont indiquées explicitement. La base est organisée autour d'une table de référence centrale (\texttt{communes}) vers laquelle convergent toutes les tables de staging thématiques.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    dim/.style  ={rectangle, draw=azure, fill=blue!7,
+                  text width=4.2cm, align=left,
+                  inner sep=2pt, font=\scriptsize},
+    dimnew/.style={rectangle, draw=successgreen, fill=green!7,
+                  text width=4.2cm, align=left,
+                  inner sep=2pt, font=\scriptsize},
+    fait/.style ={rectangle, draw=darkblue, fill=darkblue!10,
+                  text width=5cm, align=left,
+                  inner sep=2pt, font=\scriptsize\bfseries},
+    hdr/.style  ={font=\scriptsize\bfseries\color{white},
+                  fill=darkblue, draw=darkblue,
+                  text width=4.2cm, align=center, inner sep=3pt},
+    hdrf/.style ={font=\scriptsize\bfseries\color{white},
+                  fill=darkblue!80, draw=darkblue,
+                  text width=5cm, align=center, inner sep=3pt},
+    arrow/.style={->, thick, darkblue!70},
+    arrown/.style={->, thick, successgreen!80!black, dashed}
+]
+
+% ============================================================
+% TABLES DE REFERENCE GEOGRAPHIQUE
+% ============================================================
+
+% -- communes (centre) --
+\node[hdrf] (ch)  at (0, 5.5)  {\texttt{communes}};
+\node[fait, below=0 of ch]     (c1) {\underline{PK code\_commune}};
+\node[fait, below=0 of c1]     (c2) {FK code\_departement};
+\node[fait, below=0 of c2]     (c3) {nom, population};
+\node[fait, below=0 of c3]     (c4) {surface, latitude, longitude};
+
+% -- departements (gauche haut) --
+\node[hdr]  (deph) at (-7.5, 5.5) {\texttt{departements}};
+\node[dim,  below=0 of deph]   (dep1) {\underline{PK code\_departement}};
+\node[dim,  below=0 of dep1]   (dep2) {FK code\_region};
+\node[dim,  below=0 of dep2]   (dep3) {nom NVARCHAR(100)};
+
+% -- regions (gauche haut+2) --
+\node[hdr]  (rh)  at (-7.5, 7.5) {\texttt{regions}};
+\node[dim,  below=0 of rh]     (r1) {\underline{PK code\_region}};
+\node[dim,  below=0 of r1]     (r2) {nom NVARCHAR(100)};
+
+% -- bridge_commune_code_postal (droite haut) --
+\node[hdr]  (bh)  at (7.5, 7.5)  {\texttt{bridge\_commune\_code\_postal}};
+\node[dim,  below=0 of bh]     (b1) {\underline{PK id}};
+\node[dim,  below=0 of b1]     (b2) {FK code\_commune};
+\node[dim,  below=0 of b2]     (b3) {code\_postal NVARCHAR(5)};
+
+% ============================================================
+% TABLES DE STAGING (thematiques)
+% ============================================================
+
+\node[hdr]  (sph) at (7.5, 5.5)  {\texttt{stg\_population}};
+\node[dim,  below=0 of sph]    (sp1) {\underline{PK id}};
+\node[dim,  below=0 of sp1]    (sp2) {FK code\_commune};
+\node[dim,  below=0 of sp2]    (sp3) {annee, pop\_total};
+\node[dim,  below=0 of sp3]    (sp4) {pop\_hommes, pop\_femmes};
+
+\node[hdr]  (snh) at (-7.5, 3)   {\texttt{stg\_naissances}};
+\node[dim,  below=0 of snh]    (sn1) {\underline{PK id}};
+\node[dim,  below=0 of sn1]    (sn2) {FK code\_commune};
+\node[dim,  below=0 of sn2]    (sn3) {annee, nb\_naissances};
+\node[dim,  below=0 of sn3]    (sn4) {taux\_fecondite};
+
+\node[hdr]  (sdh) at (0, 2)      {\texttt{stg\_deces / stg\_emploi}};
+\node[dim,  below=0 of sdh]    (sd1) {\underline{PK id}};
+\node[dim,  below=0 of sd1]    (sd2) {FK code\_commune};
+\node[dim,  below=0 of sd2]    (sd3) {annee, nb\_deces};
+\node[dim,  below=0 of sd3]    (sd4) {taux\_chomage, nb\_emplois};
+
+\node[hdr]  (seh) at (7.5, 3)    {\texttt{stg\_creation\_entreprises}};
+\node[dim,  below=0 of seh]    (se1) {\underline{PK id}};
+\node[dim,  below=0 of se1]    (se2) {FK code\_commune};
+\node[dim,  below=0 of se2]    (se3) {annee, nb\_creations};
+\node[dim,  below=0 of se3]    (se4) {nb\_creations\_micro};
+
+\node[hdr]  (sfh) at (-7.5, 0)  {\texttt{stg\_filosofi / stg\_logement}};
+\node[dim,  below=0 of sfh]    (sf1) {\underline{PK id}};
+\node[dim,  below=0 of sf1]    (sf2) {FK code\_commune};
+\node[dim,  below=0 of sf2]    (sf3) {annee, revenu\_median};
+\node[dim,  below=0 of sf3]    (sf4) {taux\_pauvrete, nb\_residences};
+
+\node[hdr]  (smh) at (7.5, 0)   {\texttt{stg\_menage / taux\_credit}};
+\node[dim,  below=0 of smh]    (sm1) {\underline{PK id}};
+\node[dim,  below=0 of sm1]    (sm2) {FK code\_commune (NULL pour taux\_credit)};
+\node[dim,  below=0 of sm2]    (sm3) {annee, nb\_menages};
+\node[dim,  below=0 of sm3]    (sm4) {taille\_moyenne, taux, duree\_ans};
+
+% ============================================================
+% FLECHES
+% ============================================================
+
+% regions -> departements
+\draw[arrow] (dep2.west) -- ++(-0.5,0) |- (r1.west);
+
+% departements -> communes
+\draw[arrow] (c2.west)   -- (dep1.east);
+
+% communes -> bridge
+\draw[arrow] (b2.west)   -- ++(-0.5,0) |- (c1.north);
+
+% communes -> staging
+\draw[arrow] (sp2.west)  -- (c1.east);
+\draw[arrow] (sn2.east)  -- ++( 0.5,0) |- (c1.west);
+\draw[arrow] (sd2.north) -- (c4.south);
+\draw[arrow] (se2.west)  -- ++(-0.5,0) |- (c4.east);
+\draw[arrow] (sf2.east)  -- ++( 0.5,0) |- (c4.west);
+\draw[arrow] (sm2.west)  -- ++(-0.5,0) |- (c4.east);
+
+\end{tikzpicture}
+}
+\caption{Modèle Logique de Données (MLD) -- Base de données relationnelle \texttt{projet\_data\_eng}}
+\end{figure}
+\FloatBarrier
+% ─── MPD ──────────────────────────────────────────────────────────────────────
+\subsubsection{Modèle Physique de Données (MPD)}
+
+Le \textbf{Modèle Physique de Données} concrétise le MLD dans le SGBD cible : \textbf{Azure SQL Database} (moteur Microsoft SQL Server). Chaque attribut est typé précisément (\texttt{INT}, \texttt{NVARCHAR}, \texttt{FLOAT}), les clés primaires sont indexées automatiquement et les contraintes d'intégrité référentielle sont appliquées via les clés étrangères. Le schéma \texttt{dbo} (schéma par défaut d'Azure SQL) regroupe l'ensemble des tables. Ce modèle a été intégré avec succès lors de la création de la base de données, sans erreur d'exécution.
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  hd/.style ={rectangle, draw=darkblue, fill=darkblue,
+               text=white, text width=4.5cm,
+               align=center, inner sep=3pt, font=\scriptsize\bfseries},
+  pk/.style ={rectangle, draw=darkblue, fill=yellow!20,
+               text width=4.5cm, align=left,
+               inner sep=2pt, font=\scriptsize},
+  fk/.style ={rectangle, draw=darkblue, fill=blue!8,
+               text width=4.5cm, align=left,
+               inner sep=2pt, font=\scriptsize},
+  col/.style={rectangle, draw=darkblue!40, fill=white,
+               text width=4.5cm, align=left,
+               inner sep=2pt, font=\scriptsize},
+  fkarrow/.style={->, thick, darkblue!60, shorten >=2pt, shorten <=2pt},
+]
+
+% ── dbo.regions ───────────────────────────────────────────────────────────────
+\node[hd]  (rH)  at (-13, 4)   {dbo.regions};
+\node[pk,  below=0 of rH]  (rPK) {PK code\_region NVARCHAR(5)};
+\node[col, below=0 of rPK] (r1)  {nom NVARCHAR(100)};
+
+% ── dbo.departements ──────────────────────────────────────────────────────────
+\node[hd]  (dH)  at (-6.5, 4)  {dbo.departements};
+\node[pk,  below=0 of dH]  (dPK) {PK code\_departement NVARCHAR(3)};
+\node[fk,  below=0 of dPK] (d1)  {FK code\_region NVARCHAR(5)};
+\node[col, below=0 of d1]  (d2)  {nom NVARCHAR(100)};
+
+% ── dbo.communes (table centrale) ─────────────────────────────────────────────
+\node[hd]  (cH)  at (0, 4)     {dbo.communes};
+\node[pk,  below=0 of cH]  (cPK) {PK code\_commune NVARCHAR(10)};
+\node[fk,  below=0 of cPK] (c1)  {FK code\_departement NVARCHAR(3)};
+\node[col, below=0 of c1]  (c2)  {nom NVARCHAR(255)};
+\node[col, below=0 of c2]  (c3)  {population INT};
+\node[col, below=0 of c3]  (c4)  {surface FLOAT};
+\node[col, below=0 of c4]  (c5)  {latitude FLOAT};
+\node[col, below=0 of c5]  (c6)  {longitude FLOAT};
+
+% ── dbo.bridge_commune_code_postal ────────────────────────────────────────────
+\node[hd]  (bH)  at (-6.5, -3) {dbo.bridge\_commune\_code\_postal};
+\node[pk,  below=0 of bH]  (bPK) {PK id INT};
+\node[fk,  below=0 of bPK] (b1)  {FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of b1]  (b2)  {code\_postal NVARCHAR(5)};
+
+% ── dbo.taux_credit (table autonome) ──────────────────────────────────────────
+\node[hd]  (tcH) at (-13, -3)  {dbo.taux\_credit};
+\node[pk,  below=0 of tcH] (tcPK){PK id INT};
+\node[col, below=0 of tcPK](tc1) {region NVARCHAR(100)};
+\node[col, below=0 of tc1] (tc2) {annee INT};
+\node[col, below=0 of tc2] (tc3) {duree\_ans INT};
+\node[col, below=0 of tc3] (tc4) {taux FLOAT};
+
+% ── Colonne droite 1 (x=8) ────────────────────────────────────────────────────
+\node[hd]  (spH) at (8, 11)    {dbo.stg\_population};
+\node[pk,  below=0 of spH] (spPK){PK id INT};
+\node[fk,  below=0 of spPK](sp1) {FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of sp1] (sp2) {annee INT};
+\node[col, below=0 of sp2] (sp3) {population\_total FLOAT};
+\node[col, below=0 of sp3] (sp4) {pop\_hommes FLOAT};
+\node[col, below=0 of sp4] (sp5) {pop\_femmes FLOAT};
+
+\node[hd]  (snH) at (8, 6.0)   {dbo.stg\_naissances};
+\node[pk,  below=0 of snH] (snPK){PK id INT};
+\node[fk,  below=0 of snPK](sn1) {FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of sn1] (sn2) {annee INT};
+\node[col, below=0 of sn2] (sn3) {nb\_naissances INT};
+\node[col, below=0 of sn3] (sn4) {taux\_fecondite FLOAT};
+
+\node[hd]  (sdH) at (8, 1.5)   {dbo.stg\_deces};
+\node[pk,  below=0 of sdH] (sdPK){PK id INT};
+\node[fk,  below=0 of sdPK](sd1) {FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of sd1] (sd2) {annee INT};
+\node[col, below=0 of sd2] (sd3) {nb\_deces INT};
+
+\node[hd]  (seH) at (8, -2.0)  {dbo.stg\_creation\_entreprises};
+\node[pk,  below=0 of seH] (sePK){PK id INT};
+\node[fk,  below=0 of sePK](se1) {FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of se1] (se2) {annee INT};
+\node[col, below=0 of se2] (se3) {nb\_creations INT};
+\node[col, below=0 of se3] (se4) {nb\_creations\_micro INT};
+
+% ── Colonne droite 2 (x=15) ───────────────────────────────────────────────────
+\node[hd]  (semH) at (15, 8.5) {dbo.stg\_emploi\_chomage};
+\node[pk,  below=0 of semH](semPK){PK id INT};
+\node[fk,  below=0 of semPK](sem1){FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of sem1](sem2) {annee INT};
+\node[col, below=0 of sem2](sem3) {taux\_chomage FLOAT};
+\node[col, below=0 of sem3](sem4) {nb\_emplois INT};
+
+\node[hd]  (slH) at (15, 4)    {dbo.stg\_logement};
+\node[pk,  below=0 of slH] (slPK){PK id INT};
+\node[fk,  below=0 of slPK](sl1) {FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of sl1] (sl2) {annee INT};
+\node[col, below=0 of sl2] (sl3) {nb\_residences\_principales FLOAT};
+\node[col, below=0 of sl3] (sl4) {taux\_surpeuplement FLOAT};
+
+\node[hd]  (smH) at (15, -0.5) {dbo.stg\_menage};
+\node[pk,  below=0 of smH] (smPK){PK id INT};
+\node[fk,  below=0 of smPK](sm1) {FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of sm1] (sm2) {annee INT};
+\node[col, below=0 of sm2] (sm3) {nb\_menages INT};
+\node[col, below=0 of sm3] (sm4) {taille\_moyenne\_menage FLOAT};
+
+\node[hd]  (sfH) at (15, -4.5) {dbo.stg\_filosofi};
+\node[pk,  below=0 of sfH] (sfPK){PK id INT};
+\node[fk,  below=0 of sfPK](sf1) {FK code\_commune NVARCHAR(10)};
+\node[col, below=0 of sf1] (sf2) {annee INT};
+\node[col, below=0 of sf2] (sf3) {revenu\_median FLOAT};
+\node[col, below=0 of sf3] (sf4) {taux\_pauvrete FLOAT};
+
+% ── RELATIONS FK ──────────────────────────────────────────────────────────────
+% Hierarchie geographique
+\draw[fkarrow] (d1.west)  -- (rPK.east);
+\draw[fkarrow] (c1.west)  -- (dPK.east);
+% communes -> bridge
+\draw[fkarrow] (b1.east)  -- ++( 0.5,0) |- (cPK.south);
+% communes -> staging col 1 (via hub a x=3.5)
+\draw[fkarrow] (sp1.west) -- ++(-1,0) |- (cPK.east);
+\draw[fkarrow] (sn1.west) -- ++(-1,0) |- (cPK.east);
+\draw[fkarrow] (sd1.west) -- ++(-1,0) |- (cPK.east);
+\draw[fkarrow] (se1.west) -- ++(-1,0) |- (cPK.east);
+% communes -> staging col 2 (via hub a x=3.5)
+\draw[fkarrow] (sem1.west) -- ++(-8,0) |- (cPK.north);
+\draw[fkarrow] (sl1.west)  -- ++(-8,0) |- (cPK.east);
+\draw[fkarrow] (sm1.west)  -- ++(-8,0) |- (cPK.east);
+\draw[fkarrow] (sf1.west)  -- ++(-8,0) |- (cPK.east);
+
+\end{tikzpicture}
+}
+\caption{Modèle physique ERD -- Base de données relationnelle \texttt{projet\_data\_eng}}
+\end{figure}
+
+
+\subsection{Installation et configuration}
+
+La base de données \textbf{Azure SQL Database} a été choisie en cohérence directe avec la modélisation MERISE : son moteur relationnel (SQL Server) supporte nativement les types de données du MPD (\texttt{INT}, \texttt{NVARCHAR}, \texttt{FLOAT}) et les contraintes d'intégrité référentielle (clés étrangères) définies dans le MLD. Sa nature cloud garantit la disponibilité et les sauvegardes automatiques requises par le projet.
+
+\textbf{Procédure de reproduction (base de données) :}
+\begin{enumerate}
+  \item Se connecter à \texttt{portal.azure.com}
+  \item Créer un \textit{Resource Group} dédié (ex. \texttt{rg-data-eng})
+  \item Créer un \textit{SQL Server} (ex. \texttt{sqlelbrek-prod.database.windows.net}), noter le login administrateur
+  \item Créer une \textit{Azure SQL Database} rattachée au serveur (niveau tarifaire S1 recommandé)
+  \item Dans \textit{Networking} $\to$ ajouter l'IP locale en règle de pare-feu
+  \item Exécuter le script DDL de création du schéma : \texttt{sql/create\_schema.sql}
+\end{enumerate}
+
+\textbf{Procédure de reproduction (API) :}
+\begin{enumerate}
+  \item Cloner le dépôt : \texttt{git clone <url-repo>}
+  \item Installer les dépendances : \texttt{pip install -r api/requirements.txt}
+  \item Définir les variables d'environnement (voir section suivante)
+  \item Lancer l'API : \texttt{uvicorn api.main:app -{}-host 0.0.0.0 -{}-port 8000}
+\end{enumerate}
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE 3 : Azure Portal -- SQL Server/Database                        │
+% │  Fichier à placer : screenshots/azure_sql_portal.png                    │
+% │  Ce qu'il faut capturer : page Azure Portal montrant la base de données │
+% │  ou le SQL Server créé, avec son statut (Online) et ses paramètres      │
+% └─────────────────────────────────────────────────────────────────────────┘
+\screenshotTODO{azure\_sql\_portal.png}{%
+    Page Azure Portal (\texttt{portal.azure.com}) montrant la ressource
+    Azure SQL Database ou SQL Server créée, avec son statut \textbf{Online},
+    le nom du serveur FQDN (\texttt{sqlelbrek-prod.database.windows.net})
+    et les options de configuration (firewall, tarification, etc.).
+}
+% Une fois la capture faite, remplacez le bloc ci-dessus par :
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\linewidth]{azure_sql_portal.png}
+%     \caption{Azure Portal -- Configuration de la base Azure SQL Database}
+% \end{figure}
+
+\subsection{Script d'import des données}
+
+Le script \texttt{analytics/export\_to\_sql.py} assure l'export des données préparées vers Azure SQL Database. Il gère la connexion sécurisée, la création conditionnelle des tables et l'import des données. Ce script est versionné à la racine du dépôt Git du projet, avec sa documentation technique.
+
+\textbf{Dépendances nécessaires :}
+
+\begin{itemize}
+  \item \textbf{Langage} : Python 3.9+
+  \item \textbf{Dépendances externes} (fichier \texttt{requirements.txt}) :
+    \begin{itemize}
+      \item \texttt{pyodbc} -- connecteur ODBC pour Azure SQL Server
+      \item \texttt{pandas} -- manipulation des DataFrames avant import
+      \item \texttt{python-dotenv} -- chargement des variables d'environnement
+    \end{itemize}
+  \item \textbf{Système} : pilote ODBC \textit{ODBC Driver 18 for SQL Server} installé sur la machine
+\end{itemize}
+
+\textbf{Extrait -- Connexion et import :}
+
+\begin{lstlisting}[language=Python]
+def get_sql_connection():
+    """Cree connexion vers Azure SQL Database"""
+    conn_str = (
+        f'DRIVER={{ODBC Driver 18 for SQL Server}};'
+        f'SERVER={server};DATABASE={database};'
+        f'UID={username};PWD={password};Encrypt=yes;'
+    )
+    return pyodbc.connect(conn_str)
+\end{lstlisting}
+
+Le code source complet est disponible en \textbf{Annexe B.3}.
+
+\textbf{Commandes d'exécution :}
+
+\begin{lstlisting}[language=bash]
+# 1. Installer les dependances
+pip install -r requirements.txt
+
+# 2. Definir les variables d'environnement
+export AZURE_SQL_SERVER="sqlelbrek.database.windows.net"
+export AZURE_SQL_DATABASE="projet_data_eng"
+export AZURE_SQL_LOGIN="sqladmin"
+export AZURE_SQL_PASSWORD="VotreMotDePasse"
+
+# 3. Lancer l'import
+python analytics/export_to_sql.py
+\end{lstlisting}
+
+Le script vérifie l'existence des tables avant insertion (\textit{CREATE TABLE IF NOT EXISTS}) et utilise \texttt{pandas.to\_sql()} avec \texttt{if\_exists='append'} pour éviter les doublons lors de relances successives.
+
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{C12 -- Mise à disposition via API REST}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Présentation de l'API}
+
+\textbf{Framework : FastAPI}
+
+L'API expose les données territoriales via des endpoints REST sécurisés, permettant aux applications consommatrices d'accéder aux informations de manière standardisée.
+
+\subsection{Description des endpoints}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{L{2cm} L{4.5cm} L{7cm}}
+    \toprule
+    \textbf{Méthode} & \textbf{Endpoint} & \textbf{Description} \\
+    \midrule
+    GET & \texttt{/health} & Vérification état du service \\
+    GET & \texttt{/regions} & Liste des régions \\
+    GET & \texttt{/departements} & Liste des départements \\
+    GET & \texttt{/communes} & Liste paginée des communes \\
+    GET & \texttt{/communes/\{code\}} & Détails d'une commune \\
+    \bottomrule
+\end{tabular}
+\caption{Endpoints de l'API REST}
+\end{table}
+
+\subsection{Règles d'authentification}
+
+L'API implémente une authentification par clé API transmise dans le header HTTP :
+
+\begin{lstlisting}[language=Python]
+from fastapi import Security, HTTPException
+from fastapi.security import APIKeyHeader
+
+api_key_header = APIKeyHeader(name="X-API-Key")
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    if api_key != os.getenv("API_KEY"):
+        raise HTTPException(status_code=403, detail="Invalid API Key")
+    return api_key
+\end{lstlisting}
+
+\subsection{Documentation OpenAPI}
+
+La documentation est auto-générée par FastAPI et accessible à l'endpoint \texttt{/docs} (Swagger UI) et \texttt{/redoc} (ReDoc).
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE 4 : Swagger UI (/docs)                                         │
+% │  Fichier à placer : screenshots/swagger_ui.png                          │
+% │  Ce qu'il faut capturer : interface Swagger UI accessible sur           │
+% │  http://localhost:8000/docs montrant la liste des endpoints disponibles │
+% └─────────────────────────────────────────────────────────────────────────┘
+\screenshotTODO{swagger\_ui.png}{%
+    Interface Swagger UI accessible sur \texttt{http://localhost:8000/docs}
+    après démarrage de l'API avec \texttt{uvicorn}. La capture doit montrer
+    la liste des endpoints (\texttt{/health}, \texttt{/regions},
+    \texttt{/departements}, \texttt{/communes}, etc.) et l'option
+    d'authentification par API Key.
+}
+\FloatBarrier
+% Une fois la capture faite, remplacez le bloc ci-dessus par :
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\linewidth]{swagger_ui.png}
+%     \caption{Documentation OpenAPI auto-générée -- Swagger UI (\texttt{/docs})}
+% \end{figure}
+
+\subsection{Démonstration Postman}
+
+\textbf{Test avec authentification valide :}
+
+\begin{lstlisting}
+GET http://localhost:8000/communes
+Headers: X-API-Key: secret-key-123
+Response: 200 OK + JSON data
+\end{lstlisting}
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE 5 : Postman -- test GET /health                                │
+% │  Fichier à placer : screenshots/postman_health.png                      │
+% │  Ce qu'il faut capturer : fenêtre Postman avec la requête GET /health   │
+% │  et la réponse 200 OK affichant le statut du service                    │
+% └─────────────────────────────────────────────────────────────────────────┘
+\screenshotTODO{postman\_health.png}{%
+    Fenêtre Postman avec la requête \texttt{GET http://localhost:8000/health}
+    et la réponse \textbf{200 OK} affichant le JSON de statut du service
+    (ex: \texttt{\{"status": "ok"\}}).
+}
+\FloatBarrier
+% Une fois la capture faite, remplacez le bloc ci-dessus par :
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\linewidth]{postman_health.png}
+%     \caption{Postman -- Test endpoint \texttt{GET /health} (réponse 200 OK)}
+% \end{figure}
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE 6 : Postman -- test GET /communes avec API Key valide          │
+% │  Fichier à placer : screenshots/postman_communes_ok.png                 │
+% │  Ce qu'il faut capturer : fenêtre Postman avec GET /communes,           │
+% │  header X-API-Key renseigné et réponse 200 + données JSON               │
+% └─────────────────────────────────────────────────────────────────────────┘
+\screenshotTODO{postman\_communes\_ok.png}{%
+    Fenêtre Postman avec la requête \texttt{GET http://localhost:8000/communes},
+    header \texttt{X-API-Key: <votre-cle>} renseigné dans l'onglet
+    \textbf{Headers}, et la réponse \textbf{200 OK} affichant les données
+    JSON des communes (liste avec code, nom, population, etc.).
+}
+\FloatBarrier
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Ce projet a permis de concevoir et de déployer un service numérique complet dédié à l'analyse des données territoriales des Hauts-de-France. De l'extraction automatisée depuis des sources hétérogènes — API gouvernementales, fichiers CSV institutionnels, scraping web et données Big Data Parquet — jusqu'à l'exposition via une API REST sécurisée, l'ensemble du pipeline ETL a été développé, documenté et versionné dans un dépôt Git public, dans le respect des bonnes pratiques du Data Engineering.
+
+Sur le plan technique, le projet a mobilisé cinq compétences clés. La compétence C8 a été exercée à travers l'automatisation de la collecte depuis des sources multiples et variées, en Python, avec gestion robuste des erreurs et upload vers Azure Data Lake Storage Gen2. La compétence C9 s'est traduite par la conception de requêtes SQL optimisées, avec indexation et jointures multi-tables sur Azure SQL Database. La compétence C10 a couvert l'agrégation, le nettoyage et la normalisation des données via des scripts Python réutilisables. La compétence C11 a donné lieu à une modélisation complète MERISE en trois niveaux — MCD, MLD et MPD — suivie de l'implémentation effective de la base de données relationnelle, sans erreur, dans Azure SQL Database. Enfin, la compétence C12 a abouti à la mise en production d'une API REST FastAPI, sécurisée par authentification par clé, documentée automatiquement et testée via Postman.
+
+Ce projet a également constitué une expérience concrète de travail en environnement cloud Azure, mobilisant plusieurs services complémentaires : Azure SQL Database pour le stockage relationnel, Azure Data Lake Storage Gen2 pour la gestion des données brutes et transformées, Azure Key Vault pour la sécurisation des secrets, et Databricks pour le traitement de données volumineuses au format Parquet. Cette approche multi-services reflète les architectures modernes rencontrées en entreprise et renforce la capacité à concevoir des systèmes de données scalables et maintenables.
+
+D'un point de vue réglementaire, la conformité RGPD a été intégrée dès la conception : les données traitées sont exclusivement des statistiques agrégées issues de sources publiques, sans donnée personnelle identifiable. Un registre des traitements et des procédures de tri ont été formalisés et documentés, assurant la traçabilité et la reproductibilité du système.
+
+En perspective, plusieurs axes d'amélioration pourraient enrichir ce service : l'ajout de tests unitaires et d'intégration automatisés, la mise en place d'un pipeline CI/CD pour le déploiement continu, la containerisation de l'API via Docker, et la création d'un tableau de bord Power BI connecté à la base de données pour une visualisation directe des indicateurs territoriaux. Ces évolutions permettraient de faire passer ce prototype d'un environnement de développement à un système de production pleinement industrialisé.
+
+% ─────────────────────────────────────────────────────────────────────────────
+% ANNEXES
+% ─────────────────────────────────────────────────────────────────────────────
+\newpage
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+
+\section{Modélisation de la base de données}
+
+Cette annexe présente les schémas MCD, MLD et MPD complets de la base de données.
+
+\subsection{Schéma MCD}
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE 2 (répétée en annexe) : Schéma MCD complet                    │
+% │  Même image que dans la section 6.2.1                                   │
+% └─────────────────────────────────────────────────────────────────────────┘
+Voir figure~\ref{fig:mcd} page~\pageref{fig:mcd}.
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=0.9\linewidth]{mcd_schema.png}
+%     \caption{Schéma MCD complet -- Base de données territoriales}
+% \end{figure}
+
+\subsection{Script SQL complet de création}
+
+\begin{lstlisting}[language=SQL]
+-- Creation de la base de donnees territoriales
+-- Modele Physique de Donnees (MPD)
+
+CREATE TABLE regions (
+    code_region VARCHAR(2) PRIMARY KEY,
+    nom_region VARCHAR(100) NOT NULL,
+    created_at DATETIME DEFAULT GETDATE()
+);
+
+CREATE TABLE departements (
+    code_dept VARCHAR(3) PRIMARY KEY,
+    nom_dept VARCHAR(100) NOT NULL,
+    code_region VARCHAR(2) NOT NULL,
+    created_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_dept_region
+        FOREIGN KEY (code_region) REFERENCES regions(code_region)
+);
+
+CREATE TABLE communes (
+    code_commune VARCHAR(5) PRIMARY KEY,
+    nom_commune VARCHAR(100) NOT NULL,
+    population INT CHECK (population >= 0),
+    surface DECIMAL(10,2),
+    code_dept VARCHAR(3) NOT NULL,
+    created_at DATETIME DEFAULT GETDATE(),
+    CONSTRAINT FK_commune_dept
+        FOREIGN KEY (code_dept) REFERENCES departements(code_dept)
+);
+
+-- Index pour optimisation
+CREATE INDEX idx_communes_dept ON communes(code_departement);
+CREATE INDEX idx_departements_region ON departements(code_region);
+CREATE INDEX idx_communes_population ON communes(population);
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Scripts Python complets}
+\label{annexe:scripts}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Script d'extraction des communes (fetch\_communes.py)}
+\label{annexe:fetch_communes}
+
+\begin{lstlisting}[language=Python]
+"""
+Script d'extraction des communes depuis l'API Geo
+Supporte upload vers Azure Data Lake Storage Gen2
+Fichier : ingestion/API/fetch_communes.py
+"""
+import requests
+import json
+import argparse
+import os
+from azure.storage.filedatalake import DataLakeServiceClient
+
+def fetch_communes(departements, container='raw',
+                   datalake_path='geo', local_output=None):
+    """
+    Collecte communes depuis API Geo gouvernementale
+
+    Args:
+        departements : Liste des codes departements
+        container    : Container ADLS cible
+        datalake_path: Chemin dans le container
+        local_output : Repertoire sauvegarde locale
+    """
+    # Connection string depuis env ou argument
+    conn_str = os.getenv('AZURE_STORAGE_CONNECTION_STRING')
+
+    # Client ADLS si connection string fournie
+    service_client = None
+    if conn_str:
+        service_client = DataLakeServiceClient.from_connection_string(conn_str)
+        fs_client = service_client.get_file_system_client(container)
+
+    for dept in departements:
+        url = f"https://geo.api.gouv.fr/departements/{dept}/communes"
+        try:
+            print(f"[INFO] Recuperation departement {dept}...")
+            response = requests.get(url, timeout=10)
+            response.raise_for_status()
+            data = response.json()
+
+            # Sauvegarde locale si demandee
+            if local_output:
+                filename = f"{local_output}/communes_{dept}.json"
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
+                with open(filename, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, indent=2, ensure_ascii=False)
+                print(f"[OK] Sauvegarde locale : {filename}")
+
+            # Upload vers ADLS si connecte
+            if service_client:
+                remote_path = f"{datalake_path}/communes_{dept}.json"
+                file_client = fs_client.get_file_client(remote_path)
+                file_client.upload_data(
+                    json.dumps(data, ensure_ascii=False),
+                    overwrite=True
+                )
+                print(f"[OK] Upload ADLS : {remote_path}")
+
+            print(f"[OK] {len(data)} communes recuperees pour {dept}")
+
+        except requests.exceptions.Timeout:
+            print(f"[ERREUR] Timeout pour departement {dept}")
+            continue
+        except requests.exceptions.HTTPError as e:
+            print(f"[ERREUR] HTTP {e.response.status_code} pour {dept}")
+            continue
+        except Exception as e:
+            print(f"[ERREUR] {dept}: {str(e)}")
+            continue
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description='Extraction communes depuis API Geo'
+    )
+    parser.add_argument('--departements', nargs='+',
+                        default=['02','59','60','62','80'])
+    parser.add_argument('--container', default='raw')
+    parser.add_argument('--datalake-path', default='geo')
+    parser.add_argument('--local-output', default='data')
+    parser.add_argument('--connection-string')
+
+    args = parser.parse_args()
+    if args.connection_string:
+        os.environ['AZURE_STORAGE_CONNECTION_STRING'] = args.connection_string
+
+    depts = args.departements if args.departements else []
+    fetch_communes(depts, args.container, args.datalake_path,
+                   args.local_output)
+\end{lstlisting}
+
+\subsection{Script de préparation des données (data\_prep.py)}
+\label{annexe:data_prep}
+
+\begin{lstlisting}[language=Python]
+"""
+Module de preparation et nettoyage des donnees territoriales
+Fichier : analytics/lib/data_prep.py
+"""
+import pandas as pd
+import glob
+import os
+
+def prepare_tables():
+    """
+    Prepare et nettoie les donnees depuis sources multiples
+
+    Returns:
+        DataFrame : Donnees consolidees et nettoyees
+    """
+    print("[INFO] Debut preparation des tables...")
+
+    # 1. Lecture JSON depuis API Geo
+    print("[INFO] Lecture fichiers JSON communes...")
+    json_files = glob.glob('data/communes_*.json')
+
+    if not json_files:
+        print("[WARN] Aucun fichier JSON trouve")
+        return None
+
+    dfs_api = []
+    for file in json_files:
+        df = pd.read_json(file)
+        dfs_api.append(df)
+
+    communes_api = pd.concat(dfs_api, ignore_index=True)
+    print(f"[OK] {len(communes_api)} communes chargees depuis API")
+
+    # 2. Lecture CSV supplementaires (si disponibles)
+    csv_files = glob.glob('data/*.csv')
+    if csv_files:
+        print(f"[INFO] Lecture {len(csv_files)} fichiers CSV...")
+        communes_csv = pd.read_csv(csv_files[0])
+        # Fusion sur code commune
+        df_merged = pd.merge(
+            communes_api, communes_csv,
+            on='code', how='outer', suffixes=('', '_csv')
+        )
+        print(f"[OK] Fusion effectuee : {len(df_merged)} lignes")
+    else:
+        df_merged = communes_api
+
+    # 3. Nettoyage des donnees
+    print("[INFO] Nettoyage des donnees...")
+    # Suppression doublons
+    nb_before = len(df_merged)
+    df_clean = df_merged.drop_duplicates(subset='code', keep='first')
+    nb_duplicates = nb_before - len(df_clean)
+    print(f"[OK] {nb_duplicates} doublons supprimes")
+
+    # Suppression valeurs manquantes critiques
+    nb_before = len(df_clean)
+    df_clean = df_clean.dropna(subset=['code', 'nom'])
+    nb_missing = nb_before - len(df_clean)
+    print(f"[OK] {nb_missing} lignes avec valeurs manquantes supprimees")
+
+    # Filtrage valeurs aberrantes
+    if 'population' in df_clean.columns:
+        df_clean = df_clean[
+            (df_clean['population'] >= 0) &
+            (df_clean['population'] < 3000000)
+        ]
+        print(f"[OK] Filtrage valeurs aberrantes population")
+
+    # 4. Normalisation
+    print("[INFO] Normalisation des formats...")
+    # Colonnes en snake_case
+    df_clean.columns = [
+        col.lower().replace(' ', '_').replace('-', '_')
+        for col in df_clean.columns
+    ]
+    # Types de donnees
+    if 'population' in df_clean.columns:
+        df_clean['population'] = pd.to_numeric(
+            df_clean['population'], errors='coerce'
+        )
+    if 'code_postal' in df_clean.columns:
+        df_clean['code_postal'] = (
+            df_clean['code_postal'].astype(str).str.zfill(5)
+        )
+
+    # 5. Export final
+    output_file = 'data/communes_final.csv'
+    df_clean.to_csv(output_file, index=False, encoding='utf-8')
+    print(f"[OK] Export final : {output_file}")
+    print(f"[OK] {len(df_clean)} communes finales")
+
+    return df_clean
+
+if __name__ == "__main__":
+    df_final = prepare_tables()
+    if df_final is not None:
+        print("\n[SUCCESS] Preparation terminee")
+        print(f"Colonnes : {', '.join(df_final.columns[:10])}")
+        print(f"Shape : {df_final.shape}")
+\end{lstlisting}
+
+\subsection{Script d'export SQL (export\_to\_sql.py)}
+\label{annexe:export_sql}
+
+\begin{lstlisting}[language=Python]
+"""
+Script d'export des donnees preparees vers Azure SQL Database
+Fichier : analytics/export_to_sql.py
+"""
+import pandas as pd
+import pyodbc
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def get_sql_connection():
+    """Cree connexion vers Azure SQL Database"""
+    server   = os.getenv('AZURE_SQL_SERVER', 'sqlelbrek.database.windows.net')
+    database = os.getenv('AZURE_SQL_DATABASE', 'projet_data_eng')
+    username = os.getenv('AZURE_SQL_LOGIN', 'sqladmin')
+    password = os.getenv('AZURE_SQL_PASSWORD')
+
+    if not password:
+        raise ValueError("AZURE_SQL_PASSWORD non definie")
+
+    conn_str = (
+        f'DRIVER={{ODBC Driver 18 for SQL Server}};'
+        f'SERVER={server};'
+        f'DATABASE={database};'
+        f'UID={username};'
+        f'PWD={password};'
+        f'Encrypt=yes;'
+        f'TrustServerCertificate=no;'
+        f'Connection Timeout=30;'
+    )
+    return pyodbc.connect(conn_str)
+
+def create_tables_if_not_exist(cursor):
+    """Cree les tables si elles n'existent pas"""
+    ddl_regions = """
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name='regions')
+    CREATE TABLE regions (
+        code_region VARCHAR(2) PRIMARY KEY,
+        nom_region VARCHAR(100) NOT NULL,
+        created_at DATETIME DEFAULT GETDATE()
+    );"""
+
+    ddl_departements = """
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name='departements')
+    CREATE TABLE departements (
+        code_dept VARCHAR(3) PRIMARY KEY,
+        nom_dept VARCHAR(100) NOT NULL,
+        code_region VARCHAR(2),
+        created_at DATETIME DEFAULT GETDATE(),
+        FOREIGN KEY (code_region) REFERENCES regions(code_region)
+    );"""
+
+    ddl_communes = """
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name='communes')
+    CREATE TABLE communes (
+        code_commune VARCHAR(5) PRIMARY KEY,
+        nom_commune VARCHAR(100) NOT NULL,
+        population INT CHECK (population >= 0),
+        surface DECIMAL(10,2),
+        code_dept VARCHAR(3),
+        created_at DATETIME DEFAULT GETDATE(),
+        FOREIGN KEY (code_dept) REFERENCES departements(code_dept)
+    );"""
+
+    cursor.execute(ddl_regions)
+    cursor.execute(ddl_departements)
+    cursor.execute(ddl_communes)
+    print("[OK] Tables creees ou deja existantes")
+
+def export_to_sql():
+    """Exporte les donnees preparees vers Azure SQL"""
+    print("[INFO] Connexion a Azure SQL Database...")
+    conn   = get_sql_connection()
+    cursor = conn.cursor()
+
+    create_tables_if_not_exist(cursor)
+    conn.commit()
+
+    print("[INFO] Lecture donnees preparees...")
+    df_communes = pd.read_csv('data/communes_final.csv')
+    print(f"[INFO] Import de {len(df_communes)} communes...")
+
+    for idx, row in df_communes.iterrows():
+        try:
+            cursor.execute("""
+                INSERT INTO communes
+                (code_commune, nom_commune, population, code_dept)
+                VALUES (?,?,?,?)
+            """, row['code'], row['nom'],
+                row.get('population'), row.get('code_departement'))
+        except pyodbc.IntegrityError:
+            continue
+
+        if (idx + 1) % 1000 == 0:
+            print(f"[INFO] {idx+1} lignes traitees...")
+            conn.commit()
+
+    conn.commit()
+    cursor.execute("SELECT COUNT(*) FROM communes")
+    count = cursor.fetchone()[0]
+    print(f"[OK] {count} communes importees dans Azure SQL")
+    conn.close()
+
+if __name__ == "__main__":
+    export_to_sql()
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Notebook Databricks -- parquet\_etl (PySpark)}
+\label{annexe:parquet_etl}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Ce notebook est exécuté via le job \textbf{parquet-etl} sur le cluster \textbf{etl-parquet} dans le workspace Databricks \texttt{dbw-elbrek-e4}. Il lit le fichier SIRENE depuis la zone \texttt{raw/} et écrit les données nettoyées dans la zone \texttt{curated/} de l'ADLS Gen2.
+
+\begin{lstlisting}[language=Python]
+# ============================================================
+# Notebook : /Shared/parquet_etl
+# Objectif : Nettoyer SIRENE - Hauts-de-France actifs uniquement
+# ============================================================
+
+# -- CELLULE 1 : Configuration ADLS --
+STORAGE_ACCOUNT   = "adlselbrek2025"
+CONTAINER_RAW     = "raw"
+CONTAINER_CURATED = "curated"
+STORAGE_KEY = "<CLE_ACCES_ADLS>"
+
+spark.conf.set(
+    f"fs.azure.account.key.{STORAGE_ACCOUNT}.dfs.core.windows.net",
+    STORAGE_KEY
+)
+
+# -- CELLULE 2 : Chemins ADLS --
+PATH_SOURCE = (f"abfss://{CONTAINER_RAW}@{STORAGE_ACCOUNT}"
+               ".dfs.core.windows.net/Parquet/"
+               "StockEtablissement_utf8.parquet")
+PATH_OUTPUT = (f"abfss://{CONTAINER_CURATED}@{STORAGE_ACCOUNT}"
+               ".dfs.core.windows.net/etablissements_hdf_actifs/")
+
+# -- CELLULE 3 : Lecture du fichier brut (53 colonnes, >30M lignes) --
+df_raw = spark.read.parquet(PATH_SOURCE)
+
+# -- CELLULE 4 : Selection des 21 colonnes essentielles --
+COLONNES = [
+    "siret", "siren", "nic", "etablissementSiege",
+    "etatAdministratifEtablissement", "dateCreationEtablissement",
+    "dateDebut", "dateDernierTraitementEtablissement",
+    "activitePrincipaleEtablissement",
+    "nomenclatureActivitePrincipaleEtablissement",
+    "activitePrincipaleRegistreMetiersEtablissement",
+    "trancheEffectifsEtablissement", "anneeEffectifsEtablissement",
+    "caractereEmployeurEtablissement", "numeroVoieEtablissement",
+    "typeVoieEtablissement", "libelleVoieEtablissement",
+    "codePostalEtablissement", "libelleCommuneEtablissement",
+    "codeCommuneEtablissement", "denominationUsuelleEtablissement",
+    "enseigne1Etablissement",
+]
+df = df_raw.select(COLONNES)
+
+# -- CELLULE 5 : Filtre etablissements actifs (etat = 'A') --
+from pyspark.sql.functions import col, substring, lit, current_date
+from pyspark.sql.functions import to_date, create_map
+from itertools import chain
+
+df = df.filter(col("etatAdministratifEtablissement") == "A")
+
+# -- CELLULE 6 : Filtre Hauts-de-France (depts 02/59/60/62/80) --
+DEPTS_HDF = ["02", "59", "60", "62", "80"]
+df = df.filter(
+    substring(col("codeCommuneEtablissement"), 1, 2).isin(DEPTS_HDF)
+)
+
+# -- CELLULE 7 : Suppression des colonnes entierement vides --
+total = df.count()
+colonnes_vides = [c for c in df.columns
+                  if df.filter(col(c).isNull()).count() == total]
+if colonnes_vides:
+    df = df.drop(*colonnes_vides)
+
+# -- CELLULE 8 : Enrichissement et renommage --
+NOM_DEPT = {"02":"Aisne","59":"Nord","60":"Oise",
+            "62":"Pas-de-Calais","80":"Somme"}
+mapping = create_map([lit(x) for x in chain(*NOM_DEPT.items())])
+
+df = (df
+    .withColumn("code_departement",
+        substring(col("codeCommuneEtablissement"), 1, 2))
+    .withColumn("nom_departement", mapping[col("code_departement")])
+    .withColumn("region", lit("Hauts-de-France"))
+    .withColumn("date_traitement", current_date())
+    .withColumn("dateCreationEtablissement",
+        to_date(col("dateCreationEtablissement"), "yyyy-MM-dd"))
+    .withColumn("dateDebut",
+        to_date(col("dateDebut"), "yyyy-MM-dd"))
+    .withColumnRenamed("etablissementSiege",          "est_siege")
+    .withColumnRenamed("etatAdministratifEtablissement", "etat")
+    .withColumnRenamed("dateCreationEtablissement",   "date_creation")
+    .withColumnRenamed("dateDebut",                   "date_debut_periode")
+    .withColumnRenamed("dateDernierTraitementEtablissement", "date_maj")
+    .withColumnRenamed("activitePrincipaleEtablissement", "code_naf")
+    .withColumnRenamed("trancheEffectifsEtablissement","tranche_effectifs")
+    .withColumnRenamed("caractereEmployeurEtablissement","est_employeur")
+    .withColumnRenamed("numeroVoieEtablissement",     "num_voie")
+    .withColumnRenamed("typeVoieEtablissement",       "type_voie")
+    .withColumnRenamed("libelleVoieEtablissement",    "nom_voie")
+    .withColumnRenamed("codePostalEtablissement",     "code_postal")
+    .withColumnRenamed("libelleCommuneEtablissement", "commune")
+    .withColumnRenamed("codeCommuneEtablissement",    "code_commune")
+    .withColumnRenamed("denominationUsuelleEtablissement","nom_commercial")
+    .withColumnRenamed("enseigne1Etablissement",      "enseigne")
+)
+
+# -- CELLULE 9 : Apercu statistiques --
+df.groupBy("code_departement","nom_departement").count() \
+  .orderBy("code_departement").show()
+display(df.limit(20))
+
+# -- CELLULE 10 : Sauvegarde zone curated, partitionnee par dept --
+df.write.mode("overwrite") \
+    .partitionBy("code_departement") \
+    .parquet(PATH_OUTPUT)
+
+# -- CELLULE 11 : Verification --
+files = dbutils.fs.ls(PATH_OUTPUT)
+for f in files:
+    print(f.name)
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\subsection{Script export Azure SQL \texttt{projet\_data\_eng\_bis} (sql\_to\_adls\_bis.py)}
+\label{annexe:bdd_locale}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Ce script extrait les 13 tables de la base \textbf{Azure SQL} \texttt{projet\_data\_eng\_bis} hébergée sur le serveur \texttt{sqlelbrek-prod2.database.windows.net} et les exporte en Parquet vers la zone \texttt{raw/sql-bis/} de l'ADLS Gen2 (\texttt{adlselbrek2025}). Il est disponible dans \texttt{analytics/sql\_to\_adls\_bis.py}.
+
+\begin{lstlisting}[language=Python]
+"""
+Export tables Azure SQL (instance BIS) -> ADLS Gen2 (format Parquet)
+Fichier : analytics/sql_to_adls_bis.py
+"""
+import pandas as pd, sqlalchemy as sa, io, urllib
+from azure.storage.blob import BlobServiceClient, ContentSettings
+
+TABLES = [
+    "dim_commune", "bridge_commune_code_postal",
+    "stg_population", "stg_creation_entreprises",
+    "stg_creation_entrepreneurs_individuels", "stg_deces",
+    "stg_ds_filosofi", "stg_emploi_chomage", "stg_fecondite",
+    "stg_filosofi_age_tp_nivvie", "stg_logement",
+    "stg_menage", "stg_naissances",
+]
+
+def create_engine(server, database, username, password, driver):
+    params = urllib.parse.quote_plus(
+        f"Driver={{{driver}}};Server=tcp:{server},1433;"
+        f"Database={database};Uid={username};Pwd={password};"
+        f"Encrypt=yes;TrustServerCertificate=yes;"
+    )
+    return sa.create_engine(
+        f"mssql+pyodbc:///?odbc_connect={params}",
+        fast_executemany=True
+    )
+
+def upload_parquet(df, service, container, blob_name):
+    buf = io.BytesIO()
+    df.to_parquet(buf, engine="pyarrow", index=False)
+    service.get_blob_client(container=container, blob=blob_name) \
+           .upload_blob(buf.getvalue(), overwrite=True,
+                        content_settings=ContentSettings(
+                            content_type="application/octet-stream"))
+
+def main():
+    engine  = create_engine(SERVER, DATABASE, USERNAME, PASSWORD, DRIVER)
+    service = BlobServiceClient.from_connection_string(ADLS_CONN_STR)
+    for table in TABLES:
+        df = pd.read_sql(f"SELECT * FROM dbo.{table}", engine)
+        blob = f"sql-bis/{table}.parquet"
+        upload_parquet(df, service, "raw", blob)
+        print(f"[OK] {table} -> raw/{blob} ({len(df)} lignes)")
+    engine.dispose()
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Tests API avec Postman}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Cette annexe présente les captures d'écran des tests effectués avec Postman.
+
+\subsection{Test endpoint /health}
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE 5 : Postman /health                                            │
+% │  Fichier : screenshots/postman_health.png                               │
+% └─────────────────────────────────────────────────────────────────────────┘
+\screenshotTODO{postman\_health.png}{%
+    Fenêtre Postman complète montrant :
+    \textbf{(1)} la requête \texttt{GET http://localhost:8000/health},
+    \textbf{(2)} la réponse \textbf{200 OK},
+    \textbf{(3)} le corps JSON retourné (ex: \texttt{\{"status":"ok","version":"1.0"\}}).
+}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\linewidth]{postman_health.png}
+%     \caption{Test Postman -- \texttt{GET /health} (200 OK)}
+% \end{figure}
+
+\subsection{Test endpoint /communes avec authentification}
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE 6 : Postman /communes avec auth                                │
+% │  Fichier : screenshots/postman_communes_ok.png                          │
+% └─────────────────────────────────────────────────────────────────────────┘
+\screenshotTODO{postman\_communes\_ok.png}{%
+    Fenêtre Postman complète montrant :
+    \textbf{(1)} la requête \texttt{GET http://localhost:8000/communes},
+    \textbf{(2)} l'onglet \textbf{Headers} avec \texttt{X-API-Key: <votre-clé>},
+    \textbf{(3)} la réponse \textbf{200 OK} avec le tableau JSON des communes.
+}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\linewidth]{postman_communes_ok.png}
+%     \caption{Test Postman -- \texttt{GET /communes} avec API Key valide (200 OK)}
+% \end{figure}
+
+\subsection{Test rejet sans API Key}
+
+% ┌─────────────────────────────────────────────────────────────────────────┐
+% │  CAPTURE 7 : Postman 403 sans API Key                                   │
+% │  Fichier : screenshots/postman_403.png                                  │
+% └─────────────────────────────────────────────────────────────────────────┘
+\screenshotTODO{postman\_403.png}{%
+    Fenêtre Postman complète montrant :
+    \textbf{(1)} la requête \texttt{GET http://localhost:8000/communes}
+    \textbf{sans} header \texttt{X-API-Key},
+    \textbf{(2)} la réponse \textbf{403 Forbidden},
+    \textbf{(3)} le corps JSON \texttt{\{"detail":"Invalid API Key"\}}.
+}
+% \begin{figure}[H]
+%     \centering
+%     \includegraphics[width=\linewidth]{postman_403.png}
+%     \caption{Test Postman -- Rejet sans API Key (403 Forbidden)}
+% \end{figure}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Références}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Dépôt GitHub :} \url{https://github.com/haelbrek/Projet-Data-ENG}
+
+\textbf{Sources de données :}
+\begin{itemize}
+    \item API Géo : \url{https://geo.api.gouv.fr}
+    \item INSEE : \url{https://www.insee.fr}
+    \item Data.gouv.fr : \url{https://www.data.gouv.fr}
+\end{itemize}
+
+\textbf{Documentation technique :}
+\begin{itemize}
+    \item FastAPI : \url{https://fastapi.tiangolo.com}
+    \item Azure SQL Database : \url{https://docs.microsoft.com/azure/sql-database}
+    \item Pandas : \url{https://pandas.pydata.org}
+\end{itemize}
+
+\end{document}

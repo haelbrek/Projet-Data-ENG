@@ -1,0 +1,878 @@
+\documentclass[12pt,a4paper]{article}
+
+% ─── Encodage et langue ──────────────────────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% ─── Mise en page ────────────────────────────────────────────────────────────
+\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\usepackage{parskip}
+\usepackage{placeins}
+\usepackage{underscore}
+
+% ─── Polices ─────────────────────────────────────────────────────────────────
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{amssymb}
+
+% ─── Couleurs ────────────────────────────────────────────────────────────────
+\usepackage[dvipsnames]{xcolor}
+\definecolor{darkblue}{RGB}{30,80,160}
+\definecolor{successgreen}{RGB}{20,130,60}
+\definecolor{azure}{RGB}{0,127,255}
+\definecolor{codegreen}{rgb}{0.2,0.6,0.2}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.1,0.1,0.7}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{rawcol}{RGB}{255,140,0}
+\definecolor{stagcol}{RGB}{70,130,180}
+\definecolor{curcol}{RGB}{34,139,34}
+
+% ─── TikZ ────────────────────────────────────────────────────────────────────
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds, shadows}
+
+% ─── Images ──────────────────────────────────────────────────────────────────
+\usepackage{graphicx}
+\graphicspath{{screenshots/}}
+\usepackage{float}
+
+% ─── Capture TODO ────────────────────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins}
+\newcommand{\screenshotTODO}[2]{%
+  \IfFileExists{screenshots/#1}{%
+    \begin{figure}[H]
+      \centering
+      \includegraphics[width=0.95\linewidth]{#1}
+      \caption{\textit{#2}}
+    \end{figure}
+  }{%
+    \begin{tcolorbox}[
+        colback=yellow!10, colframe=BurntOrange!80,
+        fonttitle=\bfseries\small, title={TODO -- Capture d'écran à ajouter},
+        left=4pt, right=4pt, top=4pt, bottom=4pt
+    ]
+    \textbf{Fichier attendu :} \texttt{screenshots/#1}\\
+    \textbf{Ce qu'il faut capturer :} #2
+    \end{tcolorbox}
+  }%
+}
+
+% ─── Tableaux ────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+
+% ─── Code source ─────────────────────────────────────────────────────────────
+\usepackage{listings}
+\usepackage{lstautogobble}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{BrickRed},
+    basicstyle=\ttfamily\small,
+    extendedchars=true,
+    inputencoding=utf8,
+    literate=%
+      {é}{{\'e}}1 {è}{{\`e}}1 {ê}{{\^e}}1 {à}{{\`a}}1 {â}{{\^a}}1
+      {î}{{\^i}}1 {ô}{{\^o}}1 {ù}{{\`u}}1 {û}{{\^u}}1 {ç}{{\c c}}1
+      {É}{{\'E}}1 {È}{{\`E}}1 {Ê}{{\^E}}1 {À}{{\`A}}1 {Î}{{\^I}}1
+      {─}{{-}}1 {━}{{-}}1,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{gray!40},
+    autogobble=true
+}
+\lstset{style=mystyle}
+
+% ─── Hyperliens ──────────────────────────────────────────────────────────────
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue]{hyperref}
+
+% ─── En-têtes / pieds de page ────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\setlength{\headheight}{15pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small Épreuve E7 -- Data Lake}
+\fancyhead[R]{\small EL BREK HAMZA}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ─── Numérotation ────────────────────────────────────────────────────────────
+\setcounter{secnumdepth}{3}
+\setcounter{tocdepth}{3}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+    \vspace*{1cm}
+    {\Large Mise en conditions opérationnelles d'un Data Lake territorial}\\[0.4cm]
+    {\large Épreuve E7 -- Data Lake}\\[1cm]
+    {\large \textbf{EL BREK HAMZA}}\\[0.3cm]
+    {\normalsize 2026}
+\end{center}
+
+\vspace{1cm}
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Dans le cadre d'un projet de service numérique de données territoriales, ce rapport présente la mise en conditions opérationnelles d'un Data Lake Azure destiné à centraliser, transformer et exposer des données socio-économiques des Hauts-de-France. Le Data Lake constitue la colonne vertébrale du projet : il reçoit des données hétérogènes (CSV, JSON, Parquet, scraping web), les organise en zones de traitement progressif et les met à disposition des outils d'analyse et de l'API REST. Ce rapport couvre les quatre compétences visées : conception de l'architecture (C18), intégration des composants (C19), gestion du catalogue (C20) et gouvernance des données (C21).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\newpage
+\section{C18 -- Conception de l'architecture du Data Lake}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Contraintes et choix techniques}
+
+Le projet impose plusieurs contraintes qui ont guidé les choix d'architecture :
+
+\begin{itemize}
+  \item \textbf{Volume} : données SIRENE (30+ millions de lignes, fichier Parquet de plusieurs Go) et données INSEE multi-années
+  \item \textbf{Variété} : CSV institutionnels, JSON (API Géo), Excel (scraping), Parquet (SIRENE), SQL relationnel
+  \item \textbf{Vitesse} : traitements en mode \textit{batch} ponctuel (mensuel/trimestriel), déclenchés manuellement ou via scripts Python planifiés -- pas d'ingestion temps réel
+  \item \textbf{Cadre IT} : environnement 100\% cloud Azure, contraintes de coût (tier Free/Basic pour la certification), conformité RGPD obligatoire
+\end{itemize}
+
+Les technologies retenues sont justifiées dans le tableau suivant :
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{L{3.5cm} L{4cm} L{6cm}}
+  \toprule
+  \textbf{Composant} & \textbf{Technologie} & \textbf{Justification} \\
+  \midrule
+  Stockage Data Lake & Azure Data Lake Storage Gen2 & Stockage hiérarchique natif, intégration Databricks, RBAC granulaire, coût optimisé \\
+  Traitement Big Data & Azure Databricks (PySpark) & Lecture native Parquet, scalabilité horizontale, traitement distribué \\
+  Ingestion / ETL & Scripts Python locaux (requests, pandas, SQLAlchemy, BeautifulSoup) & Flexibilité, pas de dépendance à un orchestrateur cloud, exécution à la demande \\
+  Secrets & Azure Key Vault & Centralisation credentials, purge protection 90 jours \\
+  Infrastructure as Code & Terraform & Reproductibilité, versionnement, gestion état \\
+  Catalogue & Documentation technique Git + Azure Purview (comparaison) & Voir section C20 \\
+  \bottomrule
+\end{tabular}
+\caption{Stack technologique du Data Lake}
+\end{table}
+
+\subsection{Schéma d'architecture}
+
+L'architecture suit le \textbf{modèle Medallion} (Bronze/Silver/Gold), implémenté via trois zones dans l'ADLS Gen2 : \texttt{raw} (données brutes), \texttt{staging} (données transformées) et \texttt{curated} (données prêtes à la consommation).
+
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  src/.style  ={rectangle, rounded corners=4pt, draw, minimum width=3cm,
+                minimum height=0.8cm, align=center, font=\small\bfseries, drop shadow},
+  zone/.style ={rectangle, rounded corners=6pt, draw, minimum width=3.2cm,
+                minimum height=1cm, align=center, font=\small\bfseries, drop shadow},
+  tool/.style ={rectangle, rounded corners=4pt, draw=darkblue, fill=darkblue!10,
+                minimum width=3cm, minimum height=0.8cm, align=center,
+                font=\small, drop shadow},
+  lbl/.style  ={font=\footnotesize\bfseries, align=center},
+  arrow/.style={-Stealth, thick},
+  arrowb/.style={-Stealth, thick, darkblue},
+]
+
+%% ── Sources ──────────────────────────────────────────────────────────────────
+\node[src, fill=orange!15, draw=BurntOrange]  (csv)     at (-11, 5)   {CSV INSEE\\{\footnotesize data.gouv.fr}};
+\node[src, fill=green!12,  draw=OliveGreen]   (api)     at (-11, 3)   {API Géo\\{\footnotesize geo.api.gouv.fr}};
+\node[src, fill=purple!12, draw=Plum]         (scrap)   at (-11, 1)   {Scraping Excel\\{\footnotesize Meilleurtaux}};
+\node[src, fill=cyan!15,   draw=ProcessBlue]  (parquet) at (-11, -2)  {SIRENE Parquet\\{\footnotesize 30M+ lignes}};
+\node[src, fill=red!10,    draw=BrickRed]     (sqlbis)  at (-11, -4)  {Azure SQL bis\\{\footnotesize projet\_data\_eng\_bis}};
+
+%% ── Ingestion → raw ──────────────────────────────────────────────────────────
+\node[tool] (ing1) at (-6, 4)  {Python\\requests/pandas};
+\node[tool] (ing2) at (-6, 1)  {Python\\BeautifulSoup};
+\node[tool] (ing3) at (-6,-2)  {Databricks\\PySpark};
+\node[tool] (ing4) at (-6,-4)  {Python\\SQLAlchemy};
+
+%% ── ADLS Gen2 zones ──────────────────────────────────────────────────────────
+\node[zone, fill=rawcol!15, draw=rawcol,  minimum height=6cm, text width=2.6cm]
+      (raw)  at (0, 0) {\textcolor{rawcol}{\textbf{raw/}}\\[4pt]
+      {\footnotesize csv/ \\ geo/ \\ scraping/ \\ Parquet/ \\ sql-bis/}};
+
+\node[zone, fill=stagcol!15, draw=stagcol, minimum height=6cm, text width=3cm]
+      (stag) at (4.5, 0) {\textcolor{stagcol}{\textbf{staging/}}\\[4pt]
+      {\footnotesize communes\_clean/ \\ geo\_clean/ \\ taux\_clean/ \\ etablissements\\ \_hdf\_actifs/}};
+
+\node[zone, fill=curcol!15, draw=curcol, minimum height=6cm, text width=2.6cm]
+      (cur)  at (9, 0) {\textcolor{curcol}{\textbf{curated/}}\\[4pt]
+      {\footnotesize données prêtes\\ à la consommation}};
+
+% Bounding box ADLS
+\node[draw=NavyBlue, dashed, rounded corners=8pt,
+      fit=(raw)(stag)(cur), inner sep=6pt,
+      label=above:{\textbf{Azure Data Lake Storage Gen2 -- \texttt{adlselbrek2025}}}] {};
+
+%% ── Transformations raw → staging ───────────────────────────────────────────
+% Python pandas : CSV + geo + Excel → staging (données légères)
+\node[tool, fill=orange!10] (etlpy) at (4.5, -5) {Python/pandas\\{\footnotesize ETL batch ponctuel}};
+% Databricks PySpark : SIRENE → staging (grand volume)
+\node[tool, fill=cyan!10]   (dbw)    at (4.5,  5) {Azure Databricks\\{\footnotesize PySpark ETL}};
+
+%% ── Consommation ────────────────────────────────────────────────────────────
+\node[tool, fill=yellow!15] (sql)  at (13.5, 1.5)  {Azure SQL\\Database};
+\node[tool, fill=green!10]  (api2) at (13.5, -1.5) {API REST\\FastAPI};
+\node[tool, fill=purple!10] (kv)   at (13.5, -3.5) {Azure Key Vault\\{\footnotesize Secrets}};
+
+%% ── Flèches sources → ingestion ──────────────────────────────────────────────
+\draw[arrow, BurntOrange] (csv)     -- (ing1);
+\draw[arrow, OliveGreen]  (api)     -- (ing1);
+\draw[arrow, Plum]        (scrap)   -- (ing2);
+\draw[arrow, ProcessBlue] (parquet) -- (ing3);
+\draw[arrow, BrickRed]    (sqlbis)  -- (ing4);
+
+%% ── Flèches ingestion → raw ──────────────────────────────────────────────────
+\draw[arrowb] (ing1) -- (raw);
+\draw[arrowb] (ing2) -- (raw);
+\draw[arrowb] (ing3) -- (raw);
+\draw[arrowb] (ing4) -- (raw);
+
+%% ── Flèches raw → ETL ────────────────────────────────────────────────────────
+% Python ETL lit CSV/geo/Excel dans raw et écrit dans staging
+\draw[arrowb, dashed, BurntOrange] (raw) to[bend right=20] (etlpy);
+\draw[arrowb, thick, stagcol] (etlpy) to[bend right=20] (stag);
+% Databricks lit Parquet dans raw et écrit dans staging
+\draw[arrowb, dashed, ProcessBlue] (raw) to[bend left=20] (dbw);
+\draw[arrowb, thick, stagcol] (dbw) to[bend left=20] (stag);
+
+%% ── staging → curated ────────────────────────────────────────────────────────
+\draw[arrowb, thick] (stag) -- (cur);
+
+%% ── Consommation ────────────────────────────────────────────────────────────
+\draw[arrowb] (cur)  -- (sql);
+\draw[arrowb] (cur)  -- (api2);
+\draw[arrowb, dashed, gray] (kv) -- (sql);
+
+\end{tikzpicture}
+}
+\caption{Architecture du Data Lake -- modèle Medallion sur Azure}
+\end{figure}
+
+\subsection{Comparaison et choix du catalogue de données}
+
+Trois outils de catalogue ont été évalués :
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{L{3cm} L{3.5cm} L{3.5cm} L{3.5cm}}
+  \toprule
+  \textbf{Critère} & \textbf{Azure Purview} & \textbf{Apache Atlas} & \textbf{Documentation Git} \\
+  \midrule
+  Intégration Azure & Native (ADLS, SQL, Databricks) & Partielle (via connecteurs) & Manuelle \\
+  Scan automatique & Oui (scheduled) & Oui (hooks) & Non \\
+  Lineage des données & Oui & Oui & Non \\
+  RBAC & Azure AD intégré & LDAP/AD & Git permissions \\
+  Coût & Payant (unités de capacité) & Open source (infra locale) & Gratuit \\
+  Complexité installation & Faible (SaaS) & Élevée (cluster) & Nulle \\
+  \midrule
+  \textbf{Conclusion} & \textbf{Idéal en production} & Adapté on-premise & \textbf{Retenu pour ce projet} \\
+  \bottomrule
+\end{tabular}
+\caption{Comparaison des outils de catalogue}
+\end{table}
+
+\textbf{Choix retenu :} Pour ce projet de certification, la documentation technique versionnée dans Git (\texttt{docs/}) constitue le catalogue. Azure Purview est identifié comme l'outil cible en production, mais son coût le place hors périmètre pour l'environnement de développement.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\newpage
+\section{C19 -- Intégration des composants du Data Lake}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Procédure d'installation -- Infrastructure as Code (Terraform)}
+
+L'intégralité de l'infrastructure est provisionnée via \textbf{Terraform}, garantissant la reproductibilité et la traçabilité. Le fichier \texttt{Terraform/main.tf} déclare les ressources Azure suivantes : compte de stockage ADLS Gen2, filesystems (\texttt{raw}, \texttt{staging}, \texttt{curated}), Azure SQL Server \& Database, Azure Key Vault, et optionnellement Azure Databricks Workspace et cluster.
+
+\textbf{Dépendances nécessaires :}
+\begin{itemize}
+  \item Terraform $\geq$ 1.5, Azure CLI 2.52+, Python 3.10+
+  \item ODBC Driver 18 for SQL Server, \texttt{pip install -r requirements.txt}
+\end{itemize}
+
+\textbf{Procédure d'installation (environnement de développement) :}
+
+\begin{lstlisting}[language=bash, caption=Deploiement complet de l'infrastructure]
+# 1. Authentification Azure
+az login
+az account set --subscription "<subscription-id>"
+
+# 2. Initialisation Terraform
+cd Terraform
+terraform init
+
+# 3. Revue du plan
+terraform plan -var-file="terraform.tfvars"
+
+# 4. Déploiement (environ 5-10 min)
+terraform apply -var-file="terraform.tfvars" -auto-approve
+
+# 5. Récupérer les outputs (connection strings, noms)
+terraform output
+\end{lstlisting}
+
+Les ressources créées avec succès sont visibles dans le portail Azure et dans la sortie Terraform.
+
+\screenshotTODO{terraform_apply_output.png}{%
+    Sortie de \texttt{terraform apply} montrant les ressources créées avec succès :
+    ADLS Gen2, Azure SQL, Key Vault -- statut \textbf{Apply complete!}
+    avec le nombre de ressources ajoutées.
+}
+
+\subsection{Système de stockage -- Azure Data Lake Storage Gen2}
+
+Le compte de stockage \texttt{adlselbrek2025} est configuré avec le namespace hiérarchique activé (\texttt{is\_hns\_enabled = true}), TLS 1.2 minimum et HTTPS uniquement. Trois \textit{filesystems} (conteneurs) constituent les zones de traitement :
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{L{2.5cm} L{4cm} L{7cm}}
+  \toprule
+  \textbf{Zone} & \textbf{Chemin} & \textbf{Contenu} \\
+  \midrule
+  \texttt{raw/} & \texttt{raw/csv/}, \texttt{raw/geo/}, \texttt{raw/scraping/}, \texttt{raw/Parquet/}, \texttt{raw/sql-bis/} & Données brutes non transformées (CSV INSEE, JSON API Géo, Excel Meilleurtaux, SIRENE Parquet, export SQL) \\
+  \texttt{staging/} & \texttt{staging/communes\_clean/}, \texttt{staging/geo\_clean/}, \texttt{staging/taux\_clean/}, \texttt{staging/etablissements\_hdf\_actifs/} & Données nettoyées et transformées : CSV/geo/Excel via Python/pandas, SIRENE via Databricks PySpark \\
+  \texttt{curated/} & \texttt{curated/YYYY-MM/} & Données finales prêtes à la consommation, versionnées par date \\
+  \bottomrule
+\end{tabular}
+\caption{Zones du Data Lake}
+\end{table}
+
+\screenshotTODO{adls_containers.png}{%
+    Azure Portal $\to$ Storage Account \texttt{adlselbrek2025} $\to$ Containers,
+    montrant les trois filesystems \texttt{raw}, \texttt{staging}, \texttt{curated}
+    avec leur statut et taille.
+}
+
+\subsection{Outils batch -- Databricks ETL (PySpark)}
+
+Le traitement du fichier SIRENE (30+ millions de lignes) est réalisé via un notebook PySpark dans Azure Databricks. Le cluster \texttt{etl-parquet} (Spark 13.3, D4s\_v5, 1--2 workers, auto-termination 30 min) est provisionné par Terraform.
+
+\begin{lstlisting}[language=Python, caption=Extrait -- Configuration ADLS et filtrage SIRENE (Annexe~\ref{annexe:parquet})]
+# Configuration acces ADLS Gen2
+spark.conf.set(
+    f"fs.azure.account.key.{storage_account}.dfs.core.windows.net",
+    storage_key
+)
+# Lecture Parquet + selection colonnes
+df_raw = spark.read.parquet(f"abfss://raw@{storage_account}.dfs.core.windows.net/Parquet/")
+df = df_raw.select(["siret","siren","denominationUniteLegale",
+                    "activitePrincipaleEtablissement","codePostalEtablissement",
+                    "codeCommuneEtablissement","etatAdministratifEtablissement"])
+# Filtre : etablissements actifs en Hauts-de-France
+df = df.filter(col("etatAdministratifEtablissement") == "A")
+df = df.filter(substring(col("codeCommuneEtablissement"),1,2).isin(
+               ["02","59","60","62","80"]))
+# Ecriture zone staging
+df.write.mode("overwrite").parquet(
+    f"abfss://staging@{storage_account}.dfs.core.windows.net/etablissements_hdf_actifs/")
+\end{lstlisting}
+
+\screenshotTODO{databricks_job_run.png}{%
+    Azure Databricks $\to$ Workflows $\to$ Job \texttt{parquet\_etl\_job} $\to$ Run,
+    montrant le statut \textbf{Succeeded}, la durée d'exécution
+    et le nombre de lignes traitées dans les logs.
+}
+
+\subsection{Catalogue connecté au système de stockage}
+
+Le catalogue est implémenté via la documentation technique versionnée dans Git (\texttt{docs/architecture.md}, \texttt{docs/database\_setup.md}) complétée par la fonction \texttt{tables\_summary()} de l'API, qui liste dynamiquement toutes les tables disponibles avec leur nombre de lignes et de colonnes. En production, Azure Purview serait connecté directement à l'ADLS Gen2 via un scan planifié pour alimenter automatiquement le catalogue.
+
+\screenshotTODO{api_tables_summary.png}{%
+    Appel GET \texttt{/tables/summary} sur l'API FastAPI, montrant
+    la liste des tables disponibles avec \texttt{row\_count} et \texttt{col\_count}.
+}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\newpage
+\section{C20 -- Gestion du catalogue des données}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Sources d'alimentation et méthodes retenues}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{L{3cm} L{2.5cm} L{2.5cm} L{5.5cm}}
+  \toprule
+  \textbf{Source} & \textbf{Format} & \textbf{Méthode} & \textbf{Justification} \\
+  \midrule
+  CSV INSEE & CSV & Batch Python/pandas & Format standard, traitement différé, pas de contrainte temps réel \\
+  API Géo (geo.api.gouv.fr) & JSON & Batch Python/requests & API publique stable, appels par département \\
+  Scraping Meilleurtaux & Excel & Batch Python/BeautifulSoup & Pas d'API officielle disponible \\
+  SIRENE Parquet & Parquet & Batch Databricks PySpark & Volume ($>$30M lignes) impose un traitement distribué \\
+  Azure SQL bis & SQL & Batch Python/SQLAlchemy & Extraction structurée via requête SELECT \\
+  \bottomrule
+\end{tabular}
+\caption{Méthodes d'alimentation par source}
+\end{table}
+
+\subsection{Scripts d'alimentation}
+
+\subsubsection{Ingestion API Géo -- \texttt{fetch\_communes.py}}
+
+\begin{lstlisting}[language=Python, caption=Extrait -- Ingestion API et upload ADLS (Annexe~\ref{annexe:fetch})]
+def fetch_communes(departements, container='raw', datalake_path='geo'):
+    """Collecte communes depuis API Geo gouvernementale et upload ADLS"""
+    for dept in departements:
+        url = f"https://geo.api.gouv.fr/departements/{dept}/communes"
+        params = {"fields": "nom,code,codesPostaux,population,surface,contour",
+                  "format": "json", "geometry": "contour"}
+        response = requests.get(url, params=params, timeout=10)
+        response.raise_for_status()
+        data = response.json()
+        # Upload vers ADLS Gen2
+        blob_client.upload_blob(
+            f"{datalake_path}/communes_{dept}.json",
+            json.dumps(data), overwrite=True)
+\end{lstlisting}
+
+\textbf{Exécution :}
+\begin{lstlisting}[language=bash]
+export AZURE_STORAGE_CONNECTION_STRING="<connection-string>"
+python ingestion/API/fetch_communes.py --departements 02 59 60 62 80 \
+       --container raw --local-output data/
+\end{lstlisting}
+
+\subsubsection{Export Azure SQL vers ADLS -- \texttt{sql\_to\_adls\_bis.py}}
+
+\begin{lstlisting}[language=Python, caption=Extrait -- Export SQL vers Parquet ADLS (Annexe~\ref{annexe:sqlbis})]
+TABLES = ["dim_commune","stg_population","stg_creation_entreprises",
+          "stg_deces","stg_emploi_chomage","stg_fecondite",
+          "stg_filosofi","stg_logement","stg_menage","stg_naissances"]
+
+engine = create_engine(
+    f"mssql+pyodbc://sqladmin:{password}@{server}"
+    f"/{database}?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes")
+
+for table in TABLES:
+    df = pd.read_sql(f"SELECT * FROM dbo.{table}", engine)
+    parquet_bytes = df.to_parquet(index=False)
+    blob_client.upload_blob(f"raw/sql-bis/{table}.parquet",
+                            parquet_bytes, overwrite=True)
+\end{lstlisting}
+
+\subsection{Mise à jour des métadonnées du catalogue}
+
+Après chaque ingestion, les métadonnées sont mises à jour dans \texttt{docs/catalogue.md} selon le modèle suivant :
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{L{3cm} L{2.5cm} L{2cm} L{2cm} L{3.5cm}}
+  \toprule
+  \textbf{Jeu de données} & \textbf{Zone} & \textbf{Format} & \textbf{Mise à jour} & \textbf{Source} \\
+  \midrule
+  communes\_INSEE.csv & raw/csv/ & CSV & Annuelle & data.gouv.fr \\
+  communes\_\{dept\}.json & raw/geo/ & JSON & Mensuelle & geo.api.gouv.fr \\
+  taux\_meilleurtaux.xlsx & raw/scraping/ & Excel & Mensuelle & Meilleurtaux \\
+  StockEtablissement.parquet & raw/Parquet/ & Parquet & Trimestrielle & INSEE SIRENE \\
+  stg\_*.parquet & raw/sql-bis/ & Parquet & Mensuelle & Azure SQL bis \\
+  communes\_clean/ & staging/ & Parquet & Annuelle & Python/pandas ETL \\
+  geo\_clean/ & staging/ & Parquet & Mensuelle & Python/pandas ETL \\
+  taux\_clean/ & staging/ & Parquet & Mensuelle & Python/pandas ETL \\
+  etablissements\_hdf\_actifs/ & staging/ & Parquet & Trimestrielle & Databricks PySpark ETL \\
+  \bottomrule
+\end{tabular}
+\caption{Catalogue des jeux de données}
+\end{table}
+
+\subsection{Procédures de cycle de vie et de suppression}
+
+Les données sont conservées selon les durées suivantes, conformément aux exigences opérationnelles et réglementaires :
+
+\begin{itemize}
+  \item \textbf{Zone \texttt{raw/}} : conservation 12 mois glissants. Suppression automatique via \textit{Azure Blob Lifecycle Management} (règle : \texttt{delete if lastModified > 365 days}).
+  \item \textbf{Zone \texttt{staging/}} : conservation 6 mois. Écrasement à chaque recalcul Databricks (\texttt{write.mode("overwrite")}).
+  \item \textbf{Zone \texttt{curated/}} : conservation indéfinie, versionnée par date (\texttt{curated/YYYY-MM/}).
+\end{itemize}
+
+\begin{lstlisting}[language=bash, caption=Configuration Azure CLI -- regle de lifecycle sur raw/]
+az storage account management-policy create \
+  --account-name adlselbrek2025 \
+  --resource-group rg-data-eng \
+  --policy '{
+    "rules": [{
+      "name": "delete-raw-365d",
+      "type": "Lifecycle",
+      "definition": {
+        "filters": {"blobTypes":["blockBlob"], "prefixMatch":["raw/"]},
+        "actions": {"baseBlob": {"delete": {"daysAfterModificationGreaterThan": 365}}}
+      }
+    }]
+  }'
+\end{lstlisting}
+
+\subsection{Monitorage du système de stockage}
+
+Le monitorage est assuré via \textbf{Azure Monitor} et les métriques natives du compte de stockage.
+
+\textbf{Métriques surveillées :}
+\begin{itemize}
+  \item Espace utilisé par zone (\texttt{UsedCapacity}) -- alerte à 80\% du quota
+  \item Transactions par seconde (\texttt{Transactions}) -- détection pics d'ingestion
+  \item Latence des opérations (\texttt{SuccessE2ELatency}) -- SLA $<$ 200ms
+  \item État du cluster Databricks -- alerte si job en échec (\textit{Job Run Failed})
+\end{itemize}
+
+\screenshotTODO{azure_monitor_storage.png}{%
+    Azure Portal $\to$ Storage Account \texttt{adlselbrek2025} $\to$ Monitoring $\to$ Metrics,
+    montrant les graphiques \textbf{UsedCapacity} et \textbf{Transactions}
+    sur les 7 derniers jours.
+}
+
+\screenshotTODO{azure_monitor_alert.png}{%
+    Azure Monitor $\to$ Alerts, montrant une règle d'alerte configurée
+    sur \textbf{UsedCapacity} $>$ 80\% avec action group email.
+}
+
+\subsection{Registre des traitements RGPD et procédures de tri}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{L{3.5cm} L{4cm} L{2.5cm} L{3.5cm}}
+  \toprule
+  \textbf{Traitement} & \textbf{Données concernées} & \textbf{Finalité} & \textbf{Conclusion RGPD} \\
+  \midrule
+  Zones raw/, staging/, curated/ & Statistiques agrégées INSEE (population, emploi, revenus) & Analyse territoriale & \textbf{Non personnel} -- données agrégées par commune/département \\
+  SIRENE filtré (staging/) & SIRET, SIREN, adresses d'établissements & Analyse activité économique & \textbf{Attention} -- données d'entreprises individuelles (EI) peuvent être personnelles \\
+  Logs Azure Monitor & Adresses IP, identifiants utilisateur & Sécurité/audit & \textbf{Personnel} -- rétention 30 jours max \\
+  \bottomrule
+\end{tabular}
+\caption{Registre des traitements -- Data Lake \texttt{adlselbrek2025}}
+\end{table}
+
+\textbf{Procédures de tri et de conformité RGPD :}
+
+\begin{enumerate}
+  \item \textbf{Filtre SIRENE (automatisé, à chaque ETL Databricks)} : suppression des colonnes sensibles (nom du dirigeant, date de naissance) avant écriture en staging :
+\begin{lstlisting}[language=Python]
+COLONNES_SENSIBLES = ["nomUsageUniteLegale","prenomUsuelUniteLegale",
+                      "dateNaissancePersonnePhysiqueUniteLegale"]
+df = df.drop(*[c for c in COLONNES_SENSIBLES if c in df.columns])
+\end{lstlisting}
+  \item \textbf{Audit trimestriel des colonnes} : vérification manuelle du schéma Parquet en staging pour détecter toute colonne personnelle résiduelle.
+  \item \textbf{Purge des logs Azure Monitor (mensuelle)} : rétention configurée à 30 jours dans les paramètres Diagnostic Settings.
+  \item \textbf{Anonymisation EI (à la demande)} : pour les établissements de type Entrepreneur Individuel, le nom de l'établissement est remplacé par \texttt{EI\_<SIRET>} avant mise en curated.
+\end{enumerate}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\newpage
+\section{C21 -- Gouvernance et droits d'accès}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Groupes d'accès et droits associés}
+
+Les droits sont attribués à des \textbf{groupes Azure Active Directory} et non à des individus, conformément au principe du moindre privilège.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{L{3.5cm} L{4cm} L{6cm}}
+  \toprule
+  \textbf{Groupe} & \textbf{Ressources accessibles} & \textbf{Droits} \\
+  \midrule
+  \texttt{grp-data-engineers} & ADLS Gen2 (toutes zones), Databricks, Key Vault & Lecture/écriture raw+staging+curated, exécution jobs, accès secrets \\
+  \texttt{grp-data-analysts} & ADLS Gen2 (curated uniquement), Azure SQL (lecture) & Lecture seule curated/, SELECT sur toutes les tables SQL \\
+  \texttt{grp-api-consumers} & API REST FastAPI & Accès endpoints via clé API (header \texttt{X-API-Key}) \\
+  \texttt{grp-admins} & Toutes ressources Azure & Droits propriétaire, gestion RBAC et Key Vault \\
+  \bottomrule
+\end{tabular}
+\caption{Groupes d'accès et droits}
+\end{table}
+
+\subsection{Paramétrage des droits -- ADLS Gen2 (ACL)}
+
+Les droits d'accès au Data Lake sont configurés via les \textbf{ACL POSIX} de l'ADLS Gen2, en complément du RBAC Azure.
+
+\begin{lstlisting}[language=bash, caption=Configuration ACL via Azure CLI]
+# Droits data-engineers : rwx sur toutes les zones
+az storage fs access set \
+  --acl "group:grp-data-engineers:rwx" \
+  --path "/" --file-system raw \
+  --account-name adlselbrek2025
+
+# Droits data-analysts : r-x sur curated seulement
+az storage fs access set \
+  --acl "group:grp-data-analysts:r-x" \
+  --path "/" --file-system curated \
+  --account-name adlselbrek2025
+
+# Interdiction acces raw pour data-analysts
+az storage fs access set \
+  --acl "group:grp-data-analysts:---" \
+  --path "/" --file-system raw \
+  --account-name adlselbrek2025
+\end{lstlisting}
+
+\subsection{Paramétrage des droits -- Azure Key Vault}
+
+Les secrets (clés de stockage, mots de passe SQL, tokens Databricks) sont stockés dans Azure Key Vault. Les accès sont configurés via des \textit{Access Policies} par groupe :
+
+\begin{lstlisting}[language=bash, caption=Attribution des droits Key Vault par groupe]
+# data-engineers : lecture des secrets uniquement
+az keyvault set-policy --name kv-data-eng \
+  --object-id <group-id-data-engineers> \
+  --secret-permissions get list
+
+# admins : gestion complete des secrets
+az keyvault set-policy --name kv-data-eng \
+  --object-id <group-id-admins> \
+  --secret-permissions get list set delete
+\end{lstlisting}
+
+\subsection{Paramétrage des droits -- Azure SQL Database}
+
+\begin{lstlisting}[language=SQL, caption=Creation des roles et attribution des droits SQL]
+-- Creation du role lecture pour analysts
+CREATE ROLE db_analyst;
+GRANT SELECT ON SCHEMA::dbo TO db_analyst;
+
+-- Attribution du groupe AAD au role
+ALTER ROLE db_analyst ADD MEMBER [grp-data-analysts@tenant.onmicrosoft.com];
+
+-- Role ecriture pour data-engineers
+CREATE ROLE db_engineer;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::dbo TO db_engineer;
+ALTER ROLE db_engineer ADD MEMBER [grp-data-engineers@tenant.onmicrosoft.com];
+\end{lstlisting}
+
+\subsection{Paramétrage des droits -- API REST}
+
+L'accès à l'API FastAPI est contrôlé par une clé API transmise dans le header HTTP \texttt{X-API-Key}. La clé est stockée dans Azure Key Vault et injectée au démarrage de l'application.
+
+\begin{lstlisting}[language=Python, caption=Extrait -- Middleware authentification API]
+API_KEY = os.getenv("API_KEY")  # Injecte depuis Key Vault
+
+async def verify_api_key(x_api_key: str = Header(...)):
+    if x_api_key != API_KEY:
+        raise HTTPException(status_code=403, detail="Acces refuse")
+\end{lstlisting}
+
+\screenshotTODO{rbac_azure_portal.png}{%
+    Azure Portal $\to$ Resource Group \texttt{rg-data-eng} $\to$ Access Control (IAM)
+    $\to$ Role Assignments, montrant les groupes \texttt{grp-data-engineers}
+    et \texttt{grp-data-analysts} avec leurs rôles respectifs.
+}
+
+\subsection{Documentation des droits et procédure de mise à jour}
+
+La documentation complète des groupes et droits est versionnée dans \texttt{docs/gouvernance.md}. Toute modification des droits suit la procédure suivante :
+
+\begin{enumerate}
+  \item Soumission d'une demande via ticket (système de ticketing interne)
+  \item Validation par le responsable données (\textit{Data Owner})
+  \item Application via script Terraform ou Azure CLI (tracée dans l'historique Git)
+  \item Notification à l'utilisateur concerné
+  \item Mise à jour de \texttt{docs/gouvernance.md}
+\end{enumerate}
+
+Les droits individuels sont exceptionnels et documentés nominativement dans la même table avec une date d'expiration obligatoire (maximum 90 jours).
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+% ─────────────────────────────────────────────────────────────────────────────
+
+Ce projet de Data Lake Azure constitue la seconde brique du système de données mis en place dans le cadre de ce bloc de compétences. Après avoir construit une base de données relationnelle SQL alimentée par des API publiques et des sources internes, ce bloc E7 a permis de concevoir et déployer une architecture de stockage distribuée, scalable et gouvernée, capable d'absorber des volumes de données bien supérieurs à ce que permet une base relationnelle classique. L'ensemble du pipeline, de l'ingestion brute jusqu'à la mise à disposition des données transformées, a été réalisé sur la plateforme Azure via des scripts Python locaux exécutés de manière ponctuelle, sans orchestrateur cloud.
+
+L'architecture Medallion (\texttt{raw} / \texttt{staging} / \texttt{curated}) adoptée tout au long du projet constitue un standard reconnu dans le domaine de l'ingénierie des données. Elle impose une discipline claire dans le traitement des données : aucune donnée brute n'est directement exposée, chaque zone ayant une responsabilité précise. Cette séparation a facilité la détection d'erreurs lors des phases de développement et garantit la reproductibilité des traitements en cas de rejeu. Le moteur de traitement Databricks (PySpark) a permis de filtrer, transformer et charger le référentiel SIRENE (plus de 30 millions d'établissements) sans dégradation notable des performances.
+
+L'approche \textit{Infrastructure as Code} via Terraform a été un choix déterminant pour la fiabilité du projet. L'ensemble des ressources Azure -- compte de stockage ADLS Gen2, Azure SQL, Key Vault et Databricks -- est décrit dans des fichiers de configuration versionnés. Cela garantit que l'environnement peut être recréé à l'identique en quelques minutes, qu'il s'agisse d'un environnement de développement, de test ou de production. Cette traçabilité de l'infrastructure est désormais une exigence standard dans les équipes data professionnelles.
+
+La conformité RGPD a été intégrée dès la phase de conception, et non ajoutée a posteriori. Les données sensibles sont supprimées ou pseudonymisées dès la zone \texttt{staging} grâce à des procédures de tri automatisées. Une politique de rétention contrôlée, configurée via les règles de lifecycle Azure CLI, assure que les données brutes ne sont pas conservées indéfiniment. Le registre des traitements documente chaque flux de données, sa finalité, sa base légale et les mesures de sécurité associées, conformément aux exigences du RGPD.
+
+En termes de gouvernance et de sécurité, ce projet illustre la mise en pratique du principe du moindre privilège à chaque couche du système : ACL ADLS Gen2 par groupe Azure AD, politiques d'accès Key Vault segmentées par rôle, rôles SQL dédiés par profil, et authentification API par clé. Cette approche multicouche réduit la surface d'attaque et facilite les audits de sécurité. La documentation technique complète, versionnée dans le dépôt Git avec les scripts d'ingestion, les notebooks Databricks et les fichiers Terraform, assure la maintenabilité du système sur le long terme et sa prise en main par une autre équipe sans perte de contexte.
+
+% ─────────────────────────────────────────────────────────────────────────────
+\newpage
+\appendix
+\renewcommand{\thesection}{\Alph{section}}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\section{Script complet -- Databricks ETL SIRENE (PySpark)}
+\label{annexe:parquet}
+
+\begin{lstlisting}[language=Python, caption=databricks/parquet\_etl.py -- ETL complet SIRENE]
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import col, substring, current_date, when, lit
+import os
+
+spark = SparkSession.builder.appName("parquet_etl").getOrCreate()
+
+# ── Configuration ADLS ────────────────────────────────────────────────────────
+storage_account = os.getenv("STORAGE_ACCOUNT", "adlselbrek2025")
+storage_key     = os.getenv("STORAGE_KEY", "")
+spark.conf.set(
+    f"fs.azure.account.key.{storage_account}.dfs.core.windows.net",
+    storage_key)
+
+ADLS_RAW  = f"abfss://raw@{storage_account}.dfs.core.windows.net"
+ADLS_STG  = f"abfss://staging@{storage_account}.dfs.core.windows.net"
+
+# ── Lecture Parquet ───────────────────────────────────────────────────────────
+COLONNES = ["siret","siren","denominationUniteLegale",
+            "activitePrincipaleEtablissement","nomenclatureActivitePrincipaleEtab",
+            "codePostalEtablissement","libelleCommuneEtablissement",
+            "codeCommuneEtablissement","etatAdministratifEtablissement",
+            "dateCreationEtablissement","trancheEffectifsEtablissement",
+            "categorieJuridiqueUniteLegale","economieSocialeEtablissement",
+            "caractereEmployeurUniteLegale","dateDebut",
+            "typeVoieEtablissement","libelleVoieEtablissement",
+            "numeroVoieEtablissement","complementAdresseEtablissement",
+            "codeCedexEtablissement","libelleCedexEtablissement"]
+
+df_raw = spark.read.parquet(f"{ADLS_RAW}/Parquet/StockEtablissement_utf8.parquet")
+df = df_raw.select([c for c in COLONNES if c in df_raw.columns])
+
+# ── Filtres ───────────────────────────────────────────────────────────────────
+df = df.filter(col("etatAdministratifEtablissement") == "A")
+df = df.filter(substring(col("codeCommuneEtablissement"),1,2)
+               .isin(["02","59","60","62","80"]))
+
+# ── Suppression colonnes vides ────────────────────────────────────────────────
+empty_cols = [c for c in df.columns
+              if df.filter(col(c).isNotNull()).count() == 0]
+df = df.drop(*empty_cols)
+
+# ── Conformite RGPD : suppression colonnes sensibles ─────────────────────────
+SENSIBLES = ["nomUsageUniteLegale","prenomUsuelUniteLegale",
+             "dateNaissancePersonnePhysiqueUniteLegale"]
+df = df.drop(*[c for c in SENSIBLES if c in df.columns])
+
+# ── Enrichissement ────────────────────────────────────────────────────────────
+dept_map = {"02":"Aisne","59":"Nord","60":"Oise","62":"Pas-de-Calais","80":"Somme"}
+df = df.withColumn("code_departement",
+                   substring(col("codeCommuneEtablissement"),1,2))
+for code, nom in dept_map.items():
+    df = df.withColumn("nom_departement",
+         when(col("code_departement")==code, lit(nom))
+         .otherwise(col("nom_departement") if "nom_departement" in df.columns
+                    else lit(None)))
+df = df.withColumn("region", lit("Hauts-de-France"))
+df = df.withColumn("date_traitement", current_date())
+
+# ── Sauvegarde staging ────────────────────────────────────────────────────────
+df.coalesce(1).write.mode("overwrite") \
+  .partitionBy("code_departement") \
+  .parquet(f"{ADLS_STG}/etablissements_hdf_actifs/")
+
+print(f"ETL termine : {df.count()} etablissements actifs en Hauts-de-France")
+\end{lstlisting}
+
+\section{Script complet -- Ingestion API Géo (\texttt{fetch\_communes.py})}
+\label{annexe:fetch}
+
+\begin{lstlisting}[language=Python, caption=ingestion/API/fetch\_communes.py]
+import requests, json, os, argparse, logging
+from azure.storage.blob import BlobServiceClient
+
+logging.basicConfig(level=logging.INFO,
+                    format="%(asctime)s %(levelname)s %(message)s")
+logger = logging.getLogger(__name__)
+
+CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "")
+
+def fetch_communes(departements, container='raw',
+                   datalake_path='geo', local_output=None):
+    client = BlobServiceClient.from_connection_string(CONN_STR) if CONN_STR else None
+    for dept in departements:
+        url = f"https://geo.api.gouv.fr/departements/{dept}/communes"
+        params = {"fields":"nom,code,codesPostaux,population,surface,contour",
+                  "format":"json","geometry":"contour"}
+        try:
+            r = requests.get(url, params=params, timeout=10)
+            r.raise_for_status()
+            data = r.json()
+            logger.info(f"Dept {dept}: {len(data)} communes")
+            # Sauvegarde locale
+            if local_output:
+                path = os.path.join(local_output, f"communes_{dept}.json")
+                with open(path, "w", encoding="utf-8") as f:
+                    json.dump({"communes": data}, f, ensure_ascii=False)
+            # Upload ADLS
+            if client:
+                blob = client.get_blob_client(
+                    container=container,
+                    blob=f"{datalake_path}/communes_{dept}.json")
+                blob.upload_blob(json.dumps({"communes": data},
+                                 ensure_ascii=False), overwrite=True)
+                logger.info(f"Upload ADLS: {datalake_path}/communes_{dept}.json")
+        except requests.exceptions.Timeout:
+            logger.error(f"Timeout pour departement {dept}")
+        except requests.exceptions.HTTPError as e:
+            logger.error(f"Erreur HTTP {e.response.status_code} pour {dept}")
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--departements", nargs="+",
+                        default=["02","59","60","62","80"])
+    parser.add_argument("--container", default="raw")
+    parser.add_argument("--local-output", default=None)
+    args = parser.parse_args()
+    fetch_communes(args.departements, args.container,
+                   local_output=args.local_output)
+\end{lstlisting}
+
+\section{Script complet -- Export SQL vers ADLS (\texttt{sql\_to\_adls\_bis.py})}
+\label{annexe:sqlbis}
+
+\begin{lstlisting}[language=Python, caption=analytics/sql\_to\_adls\_bis.py]
+import os, pandas as pd
+from sqlalchemy import create_engine
+from azure.storage.blob import BlobServiceClient
+
+SERVER   = os.getenv("AZURE_SQL_SERVER_BIS")
+DATABASE = os.getenv("AZURE_SQL_DATABASE_BIS")
+LOGIN    = os.getenv("AZURE_SQL_LOGIN_BIS")
+PASSWORD = os.getenv("AZURE_SQL_PASSWORD_BIS")
+CONN_STR = os.getenv("AZURE_STORAGE_CONNECTION_STRING")
+
+TABLES = ["dim_commune","stg_population","stg_creation_entreprises",
+          "stg_deces","stg_emploi_chomage","stg_fecondite",
+          "stg_filosofi","stg_logement","stg_menage","stg_naissances"]
+
+engine = create_engine(
+    f"mssql+pyodbc://{LOGIN}:{PASSWORD}@{SERVER}"
+    f"/{DATABASE}?driver=ODBC+Driver+18+for+SQL+Server&Encrypt=yes")
+
+blob_service = BlobServiceClient.from_connection_string(CONN_STR)
+
+for table in TABLES:
+    print(f"Exportation {table}...")
+    df = pd.read_sql(f"SELECT * FROM dbo.{table}", engine)
+    parquet_bytes = df.to_parquet(index=False)
+    blob = blob_service.get_blob_client(
+        container="raw", blob=f"sql-bis/{table}.parquet")
+    blob.upload_blob(parquet_bytes, overwrite=True)
+    print(f"  -> {len(df)} lignes exportees vers raw/sql-bis/{table}.parquet")
+
+print("Export termine.")
+\end{lstlisting}
+
+\end{document}

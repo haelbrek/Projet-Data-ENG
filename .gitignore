@@ -1,6 +1,18 @@
 # Created by https://www.toptal.com/developers/gitignore/api/terraform,python
 # Edit at https://www.toptal.com/developers/gitignore?templates=terraform,python
 
+### Données volumineuses ###
+data/communes.json
+
+### LaTeX ###
+*.aux
+*.out
+*.toc
+*.log
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/

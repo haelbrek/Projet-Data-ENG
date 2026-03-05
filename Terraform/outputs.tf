@@ -71,7 +71,7 @@ output "sql_database_id" {
 }
 
 output "databricks_workspace_url" {
-  value       = azurerm_databricks_workspace.dbw.workspace_url
+  value       = var.create_databricks ? azurerm_databricks_workspace.dbw[0].workspace_url : "Databricks desactive (create_databricks = false)"
   description = "URL du workspace Databricks cree"
 }
 
