@@ -1,0 +1,207 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[top=1.8cm, bottom=1.8cm, left=2cm, right=2cm]{geometry}
+\usepackage{parskip}
+\setlength{\parskip}{4pt}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[dvipsnames]{xcolor}
+
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\tcbset{info/.style={colback=gray!5, colframe=gray!40, fonttitle=\bfseries\small, breakable, top=3pt, bottom=3pt}}
+
+\usepackage{enumitem}
+\setlist{nosep, topsep=2pt}
+\usepackage[colorlinks=true, linkcolor=NavyBlue, urlcolor=NavyBlue]{hyperref}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small E1 -- Analyse de besoin -- Données territoriales}
+\fancyhead[R]{\small EL BREK HAMZA}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\setcounter{secnumdepth}{1}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+  {\large \textbf{Service numérique de données territoriales}}\\[0.2cm]
+  {\normalsize E1 -- Analyse de besoin \quad|\quad \textbf{EL BREK HAMZA} \quad|\quad Mars 2026}
+\end{center}
+
+\vspace{0.2cm}
+\begin{tcolorbox}[info]
+\textbf{Contexte :} Établissement bancaire dont le périmètre d'activité couvre la région \textbf{Hauts-de-France} (plan stratégique 2030 -- consolidation et expansion dans la région). Besoin exprimé : \textit{«~Nous avons besoin de données sur les territoires de la région Hauts-de-France pour savoir où ouvrir nos prochaines agences (indicateurs INSEE, géographie, taux immobiliers locaux).~»}\\
+\textbf{Parties prenantes :} Direction Stratégie (commanditaire) · Analystes métiers (exploitants) · DSI (producteurs) · Équipe Conformité (RGPD).
+\end{tcolorbox}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Grille d'entretien -- Producteurs de données}
+% ─────────────────────────────────────────────────────────────────────────────
+{\small \textit{Profils visés : DSI, équipes SI métiers, gestionnaires de flux externes.}}
+
+\vspace{0.3cm}
+\begin{longtable}{L{0.4cm} L{7.5cm} L{6.5cm}}
+  \toprule
+  \textbf{N°} & \textbf{Question} & \textbf{Réponse} \\
+  \midrule
+  \endfirsthead
+  \midrule
+  \textbf{N°} & \textbf{Question} & \textbf{Réponse} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Identification}}} \\[0.2em]
+  1 & Nom, poste, service & \\[0.8em]
+  2 & Rôle dans la chaîne de production de données & \\[0.8em]
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Données produites}}} \\[0.2em]
+  3 & Quelles données produisez-vous ou gérez-vous ? & \\[0.8em]
+  4 & Format et volume ? (CSV, JSON, BDD -- nb de lignes, taille) & \\[0.8em]
+  5 & Fréquence de mise à jour ? (temps réel, quotidien, mensuel\ldots) & \\[0.8em]
+  6 & Identifiants uniques des données ? (code INSEE, SIREN\ldots) & \\[0.8em]
+  7 & Les données contiennent-elles des données personnelles (RGPD) ? & \\[0.8em]
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Métadonnées et documentation}}} \\[0.2em]
+  8 & Dictionnaire de données ou documentation disponible ? & \\[0.8em]
+  9 & Qui est le propriétaire (\textit{data owner}) de ces données ? & \\[0.8em]
+  10 & Comment la qualité des données est-elle contrôlée ? & \\[0.8em]
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Accès, stockage et traitements}}} \\[0.2em]
+  11 & Où les données sont-elles stockées ? (on-premise, cloud, SaaS\ldots) & \\[0.8em]
+  12 & Droits d'accès en place ? (profils, rôles, cloisonnement) & \\[0.8em]
+  13 & Mode de transfert ? (API, SFTP, export batch, accès BDD direct) & \\[0.8em]
+  14 & Transformations appliquées avant mise à disposition ? & \\[0.8em]
+  15 & Problèmes récurrents sur la qualité ou la disponibilité ? & \\[0.8em]
+\end{longtable}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Grille d'entretien -- Exploitants de données}
+% ─────────────────────────────────────────────────────────────────────────────
+{\small \textit{Profils visés : Direction Stratégie, analystes métiers, équipes Risques et Marketing.}}
+
+\vspace{0.3cm}
+\begin{longtable}{L{0.4cm} L{7.5cm} L{6.5cm}}
+  \toprule
+  \textbf{N°} & \textbf{Question} & \textbf{Réponse} \\
+  \midrule
+  \endfirsthead
+  \midrule
+  \textbf{N°} & \textbf{Question} & \textbf{Réponse} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Identification}}} \\[0.2em]
+  1 & Nom, poste, service & \\[0.8em]
+  2 & Rôle dans le projet data envisagé & \\[0.8em]
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Besoins et cas d'usage}}} \\[0.2em]
+  3 & Dans quel cadre avez-vous besoin de données territoriales ? & \\[0.8em]
+  4 & Décrivez un cas d'usage concret. & \\[0.8em]
+  5 & Quelle décision business souhaitez-vous prendre grâce à ces données ? & \\[0.8em]
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Données et indicateurs}}} \\[0.2em]
+  6 & Quels indicateurs sont les plus importants ? (population, revenus, immobilier\ldots) & \\[0.8em]
+  7 & À quelle maille géographique travaillez-vous ? (commune, département, région\ldots) & \\[0.8em]
+  8 & Quelle fraîcheur minimale est acceptable ? & \\[0.8em]
+  9 & Exigences de complétude et de fiabilité ? & \\[0.8em]
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Accès et interfaces}}} \\[0.2em]
+  10 & Forme d'accès souhaitée ? (API, export CSV, dashboard, accès BDD) & \\[0.8em]
+  11 & Outils d'analyse habituels ? (Excel, Power BI, Python, R\ldots) & \\[0.8em]
+  12 & Besoins d'accessibilité spécifiques ? (daltonisme, lecteur d'écran\ldots) & \\[0.8em]
+
+  \multicolumn{3}{l}{\small\textit{\textbf{Contraintes et gouvernance}}} \\[0.2em]
+  13 & Contraintes réglementaires sur les données exploitées ? (RGPD, secret bancaire) & \\[0.8em]
+  14 & Qui doit être habilité à accéder aux données ? & \\[0.8em]
+  15 & Points de douleur de la solution actuelle ? Critères de succès du projet ? & \\[0.8em]
+\end{longtable}
+
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Note de synthèse}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Besoin reformulé :} Concevoir un service numérique capable de collecter, transformer, stocker et exposer des données territoriales hétérogènes (socio-économiques, démographiques, géographiques, immobilières) pour alimenter les décisions d'expansion de la banque.
+
+\textbf{Objectifs SMART :}
+\begin{itemize}
+  \item \textbf{O1 -- Collecte :} Automatiser l'extraction depuis $\geq$4 sources (API Géo INSEE, CSV data.gouv.fr, Meilleurtaux) couvrant 100\,\% des communes de la région \textbf{Hauts-de-France} (5 départements : Nord, Pas-de-Calais, Somme, Oise, Aisne -- environ 3\,700 communes) avec $\geq$8 indicateurs/commune. \textit{Délai : mois 2.}
+  \item \textbf{O2 -- Stockage :} Charger les données dans une base relationnelle Azure SQL (3NF) avec $<$5\,\% de valeurs manquantes et temps de requête $<$2s. \textit{Délai : mois 3.}
+  \item \textbf{O3 -- Exposition :} API REST (FastAPI) avec auth, disponibilité $\geq$99\,\%, consultation par commune et par département (Nord, Pas-de-Calais, Somme, Oise, Aisne). \textit{Délai : mois 4.}
+\end{itemize}
+
+\textbf{Périmètre v1 :} communes de la région \textbf{Hauts-de-France} (5 départements), sources publiques, API REST + export CSV. \textbf{Hors scope v1 :} autres régions françaises, dashboard graphique, CRM interne.
+
+\textbf{Opportunités :} besoin non satisfait (exports manuels Excel actuellement) · données publiques gratuites · alignement stratégique 2030 · maîtrise technique de l'équipe.
+
+\textbf{Contraintes :} hétérogénéité des sources · valeurs manquantes sur petites communes · données CRM avec DCP (AIPD requise, repoussé v2) · équipe réduite (1 data engineer).
+
+\textbf{Benchmark :} solutions SaaS (Esri, Drylands) écartées ($>$30k€/an) -- \textbf{solution maison retenue} : personnalisable, coût $\approx$50€/mois, maîtrise complète des données.
+
+\textbf{Faisabilité :} coûts maîtrisés (Azure SQL Basic + App Service Free) · délai 4 mois réaliste · risque qualité modéré, mitigé par règles de validation ($\geq$95\,\% complétude imposée).
+
+\textbf{Analyse RICE :}
+
+{\small La méthode \textbf{RICE} est un outil de priorisation qui attribue un score à chaque fonctionnalité selon 4 critères : \textbf{R}each (nombre d'utilisateurs touchés), \textbf{I}mpact (bénéfice métier apporté), \textbf{C}onfidence (degré de certitude sur les estimations) et \textbf{E}ffort (charge de travail). Le score se calcule : \textbf{Score = (Reach × Impact × Confidence) / Effort}. Plus le score est élevé, plus la fonctionnalité est prioritaire.}
+
+\vspace{0.3em}
+\begin{tabular}{L{4.5cm} C{1.5cm} C{1.5cm} C{2cm} C{1.5cm} C{1.5cm}}
+  \toprule
+  \textbf{Fonctionnalité} & Reach & Impact & Confidence & Effort & \textbf{Score} \\
+  \midrule
+  Pipeline ETL automatisé & 5 & 3 & 0.9 & 3 & \textbf{4.5} \\
+  Stockage Azure SQL & 5 & 3 & 0.9 & 2 & \textbf{6.75} \\
+  API REST FastAPI & 4 & 3 & 0.8 & 3 & \textbf{3.2} \\
+  Dashboard BI (v2) & 3 & 2 & 0.6 & 4 & \textbf{0.9} \\
+  Intégration CRM (v2) & 2 & 3 & 0.5 & 5 & \textbf{0.6} \\
+  \bottomrule
+\end{tabular}
+
+{\small \textit{Reach} : 1--5 (utilisateurs concernés) · \textit{Impact} : 1--3 (bénéfice métier) · \textit{Confidence} : 0--1 · \textit{Effort} : 1=charge élevée, 5=charge faible. Les 3 fonctionnalités cœur obtiennent les meilleurs scores -- \textbf{projet validé dans le périmètre défini.}}
+
+\vspace{0.5cm}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Cadrage projet}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\textbf{Hypothèses techniques :} Python/pandas (extraction + transformation) · Azure SQL Database Basic (stockage) · FastAPI sur Azure App Service (exposition) · Azure Key Vault (secrets) · RBAC Azure Reader/Contributor · GitHub Actions (orchestration).
+
+\textbf{Accessibilité :}
+\begin{itemize}
+  \item \textit{Équipe technique :} documentation Markdown structurée (compatible technologies d'assistance), supports en formats accessibles.
+  \item \textit{Utilisateurs finaux :} Swagger UI navigable au clavier, contrastes WCAG 2.1 AA, exports CSV/JSON disponibles, futurs dashboards sans couleur seule comme vecteur d'information.
+\end{itemize}
+
+\textbf{Conformité RGPD :}
+\begin{itemize}
+  \item Logs API : hashage des IP, rétention 90 jours.
+  \item Clés API : stockage chiffré (Key Vault), révocation immédiate.
+  \item Données CRM (v2) : AIPD obligatoire, pseudonymisation.
+  \item Résidence des données : région Azure \textit{France Central} imposée.
+  \item Registre des traitements (Art. 30) : entrée créée avec finalité, base légale, durée de conservation.
+  \item Actions non-techniques : désignation DPO, formation équipe \textit{privacy by design}, revue RGPD à chaque évolution majeure.
+\end{itemize}
+
+\end{document}

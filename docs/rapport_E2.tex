@@ -1,0 +1,583 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage[top=2cm, bottom=2cm, left=2.5cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\setstretch{1.15}
+\usepackage{parskip}
+\setlength{\parskip}{5pt}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[dvipsnames]{xcolor}
+\definecolor{darkblue}{RGB}{30,80,160}
+\definecolor{successgreen}{RGB}{20,130,60}
+\definecolor{lightgray}{RGB}{248,248,248}
+
+% ─── Tableaux ────────────────────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{float}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{C}[1]{>{\centering\arraybackslash}p{#1}}
+
+% ─── Boîtes ──────────────────────────────────────────────────────────────────
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\tcbset{
+  cadre/.style={colback=NavyBlue!5,colframe=NavyBlue!50,fonttitle=\bfseries\small,breakable,top=4pt,bottom=4pt},
+  verte/.style={colback=successgreen!5,colframe=successgreen!50,fonttitle=\bfseries\small,breakable,top=4pt,bottom=4pt},
+  orange/.style={colback=BurntOrange!6,colframe=BurntOrange!50,fonttitle=\bfseries\small,breakable,top=4pt,bottom=4pt},
+  gris/.style={colback=gray!5,colframe=gray!40,fonttitle=\bfseries\small,breakable,top=4pt,bottom=4pt}
+}
+
+% ─── Listes ──────────────────────────────────────────────────────────────────
+\usepackage{enumitem}
+\setlist{nosep,topsep=3pt,leftmargin=*}
+
+% ─── Code ────────────────────────────────────────────────────────────────────
+\usepackage{listings}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{codegreen}{rgb}{0.2,0.6,0.2}
+\definecolor{codeblue}{rgb}{0.1,0.1,0.7}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codeblue}\bfseries,
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true, frame=single, rulecolor=\color{gray!40},
+    numbers=left, numberstyle=\tiny\color{gray}, numbersep=5pt
+}
+\lstset{style=mystyle}
+
+% ─── Liens ───────────────────────────────────────────────────────────────────
+\usepackage[colorlinks=true,linkcolor=NavyBlue,urlcolor=NavyBlue]{hyperref}
+
+% ─── En-têtes ────────────────────────────────────────────────────────────────
+\usepackage{fancyhdr}
+\setlength{\headheight}{14.5pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small E2 -- Préparation d'un projet data -- Données territoriales HdF}
+\fancyhead[R]{\small EL BREK HAMZA}
+\fancyfoot[C]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{center}
+  \vspace*{0.5cm}
+  {\Large \textbf{Service numérique de données territoriales\\Hauts-de-France}}\\[0.4cm]
+  {\large Épreuve E2 -- Préparation d'un projet data}\\[0.3cm]
+  {\normalsize Certification Data Engineer \quad|\quad \textbf{EL BREK HAMZA} \quad|\quad Mars 2026}
+\end{center}
+
+\vspace{0.4cm}
+\tableofcontents
+\newpage
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Note de synthèse -- Compréhension du besoin data}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Contexte et enjeux}
+
+L'établissement bancaire opère dans la région \textbf{Hauts-de-France} et conduit un plan stratégique
+à horizon 2030 visant à consolider et étendre son réseau d'agences sur les 5 départements de la
+région (Nord -- 59, Pas-de-Calais -- 62, Somme -- 80, Oise -- 60, Aisne -- 02). Pour alimenter ces
+décisions d'implantation, la Direction Stratégie a exprimé un besoin data structuré autour d'une
+question centrale : \textit{quels territoires de la région présentent le meilleur potentiel pour
+l'ouverture de nouvelles agences ?}
+
+L'absence d'un outil centralisé contraignait les analystes à des exports manuels depuis data.gouv.fr,
+sources d'erreurs et de pertes de temps significatives. Ce projet vise à combler ce manque par un
+service numérique pérenne, automatisé et sécurisé.
+
+\subsection{Reformulation du besoin et objectifs SMART}
+
+\begin{tcolorbox}[cadre, title={Besoin reformulé}]
+Concevoir un \textbf{pipeline de données automatisé} collectant, transformant et exposant des
+indicateurs territoriaux (socio-économiques, démographiques, géographiques, immobiliers)
+pour l'ensemble des communes des Hauts-de-France, accessibles via une API REST sécurisée.
+\end{tcolorbox}
+
+\vspace{0.3em}
+
+\begin{tabular}{L{3.2cm} L{10.5cm}}
+  \toprule
+  \textbf{Objectif} & \textbf{Formulation SMART} \\
+  \midrule
+  O1 -- Collecte & Automatiser l'extraction depuis $\geq$4 sources hétérogènes (API Géo, CSV INSEE, scraping Meilleurtaux, SIRENE Parquet) couvrant les \textbf{$\approx$3\,700 communes} des 5 départements HdF avec $\geq$8 indicateurs/commune. Délai : \textbf{fin mois 2}. \\[0.5em]
+  O2 -- Stockage & Charger les données dans une base relationnelle Azure SQL (schéma 3NF, $<$5\,\% valeurs manquantes, requêtes $<$2s). Délai : \textbf{fin mois 3}. \\[0.5em]
+  O3 -- Exposition & Déployer une API REST (FastAPI) avec authentification par clé API, disponibilité $\geq$99\,\%, consultable par commune et département. Délai : \textbf{fin mois 4}. \\
+  \bottomrule
+\end{tabular}
+
+\subsection{Parties prenantes}
+
+\begin{tabular}{L{4cm} L{3.5cm} L{6cm}}
+  \toprule
+  \textbf{Partie prenante} & \textbf{Rôle} & \textbf{Attentes} \\
+  \midrule
+  Direction Stratégie 2030 & Commanditaire & Données fiables pour décisions d'implantation \\
+  Analystes métiers & Exploitants & API et exports CSV faciles d'utilisation \\
+  DSI / SI métiers & Producteurs & Intégration sans perturbation des SI existants \\
+  Équipe Conformité & Contrôle RGPD & Sécurité des accès, registre des traitements \\
+  Data Engineer (EL BREK H.) & Maîtrise d'œuvre & Réalisation technique du pipeline \\
+  \bottomrule
+\end{tabular}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Avant-projet}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Méthode et organisation}
+
+Le projet est conduit en méthode \textbf{agile allégée} avec des sprints de 2 semaines et des
+points hebdomadaires avec le commanditaire. Les livrables sont versionnés sur GitHub
+(\texttt{haelbrek/Projet-Data-ENG}) avec une branche \texttt{develop} intégrée dans \texttt{main}
+via Pull Requests.
+
+\textbf{Rôles et responsabilités :}
+
+\begin{tabular}{L{4cm} L{9.5cm}}
+  \toprule
+  \textbf{Rôle} & \textbf{Responsabilités} \\
+  \midrule
+  Data Engineer (EL BREK H.) & Développement des pipelines ETL, modélisation BDD, déploiement API, infrastructure Terraform \\
+  Direction Stratégie & Validation des indicateurs métiers, recette fonctionnelle \\
+  DSI & Accès aux ressources cloud Azure, revue sécurité \\
+  Équipe Conformité & Validation RGPD, registre des traitements \\
+  \bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+\textbf{Gestion des risques projet :}
+
+\begin{tabular}{L{4cm} C{1.8cm} C{1.8cm} L{5.5cm}}
+  \toprule
+  \textbf{Risque} & \textbf{Probabilité} & \textbf{Impact} & \textbf{Mitigation} \\
+  \midrule
+  Source externe indisponible & Moyenne & Élevé & Système de cache local + fallback CSV \\
+  Dépassement budget Azure & Faible & Moyen & Alertes Azure Monitor sur les coûts \\
+  Évolution codes INSEE & Faible & Moyen & Table de correspondance historique \\
+  Demande d'intégration DCP & Moyenne & Élevé & Clause AIPD préalable obligatoire \\
+  \bottomrule
+\end{tabular}
+
+\subsection{Planning prévisionnel}
+
+\begin{tabular}{C{0.6cm} L{3cm} L{8.5cm}}
+  \toprule
+  \textbf{M.} & \textbf{Phase} & \textbf{Tâches principales} \\
+  \midrule
+  1 & Cadrage & Entretiens parties prenantes · cartographie des sources · choix d'architecture · provisionnement cloud (Terraform) \\
+  2 & Extraction & Scripts Python (API Géo, CSV INSEE, scraping) · ETL Databricks SIRENE Parquet · upload ADLS Gen2 \\
+  3 & Transformation \& Stockage & Nettoyage/normalisation pandas · modélisation MERISE · chargement Azure SQL Database \\
+  4 & Exposition \& Livraison & Développement API FastAPI · déploiement Azure App Service · tests, documentation, recette \\
+  \bottomrule
+\end{tabular}
+
+\subsection{Budget prévisionnel}
+
+\begin{tabular}{L{5.5cm} C{2.5cm} L{5cm}}
+  \toprule
+  \textbf{Poste} & \textbf{Coût mensuel} & \textbf{Détail} \\
+  \midrule
+  Azure SQL Database (Basic) & $\approx$5€ & Base relationnelle, sauvegardes auto 7j \\
+  Azure Data Lake Storage Gen2 & $\approx$10€ & Stockage raw/staging/curated \\
+  Azure App Service (F1 Free) & 0€ & Hébergement API REST \\
+  Databricks (cluster spot) & $\approx$15€ & ETL SIRENE Parquet (usage ponctuel) \\
+  Azure Key Vault & $\approx$2€ & Gestion des secrets \\
+  Azure Monitor + alertes & $\approx$5€ & Surveillance et logs \\
+  \midrule
+  \textbf{Total infrastructure} & \textbf{$\approx$37€/mois} & Coût total projet (4 mois) : \textbf{$\approx$150€} \\
+  Données sources & 0€ & Open data (data.gouv.fr, INSEE, API Géo) \\
+  Ressources humaines & Projet certif. & 1 data engineer (formation) \\
+  \bottomrule
+\end{tabular}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Topographie des données}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Catalogue des sources}
+
+\begin{longtable}{L{2.8cm} L{2cm} L{1.8cm} L{2cm} L{1.5cm} L{3.2cm}}
+  \toprule
+  \textbf{Source} & \textbf{Fournisseur} & \textbf{Format} & \textbf{Fréquence} & \textbf{Licence} & \textbf{Indicateurs} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{Source} & \textbf{Fournisseur} & \textbf{Format} & \textbf{Fréquence} & \textbf{Licence} & \textbf{Indicateurs} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  API Géo & geo.api.gouv.fr & JSON/REST & Temps réel & Open Licence & Code INSEE, population, surface, coordonnées \\[0.4em]
+  CSV Démographie & INSEE / data.gouv.fr & CSV & Annuelle & Open Licence & Naissances, décès, fécondité, ménages \\[0.4em]
+  CSV Emploi-Chômage & INSEE / data.gouv.fr & CSV & Annuelle & Open Licence & Taux chômage, emplois par secteur \\[0.4em]
+  CSV FILOSOFI & INSEE / data.gouv.fr & CSV & Annuelle & Open Licence & Revenus médians, niveau de vie, pauvreté \\[0.4em]
+  CSV Logement & INSEE / data.gouv.fr & CSV & Annuelle & Open Licence & Résidences principales, vacance, propriétaires \\[0.4em]
+  Scraping Meilleurtaux & Meilleurtaux.com & JSON (AJAX) & Mensuelle & Usage privé & Taux crédit immo par région et durée \\[0.4em]
+  \textbf{SIRENE Parquet} & \textbf{INSEE (Databricks)} & \textbf{Parquet} & \textbf{Mensuelle} & \textbf{Open Licence} & \textbf{Établissements actifs HdF, activité NAF, effectifs} \\[0.4em]
+  Azure SQL (interne) & SI métiers banque & SQL/Parquet & Mensuelle & Interne & Tables territoriales structurées (staging) \\
+\end{longtable}
+
+\subsection{Métadonnées clés}
+
+\begin{tabular}{L{3cm} L{3cm} L{2cm} L{2cm} L{3.5cm}}
+  \toprule
+  \textbf{Jeu de données} & \textbf{Identifiant clé} & \textbf{Granularité} & \textbf{Volume} & \textbf{Contrainte qualité} \\
+  \midrule
+  Communes HdF & Code INSEE (5c) & Commune & $\approx$3\,700 lignes & 0\% valeurs manquantes \\
+  Démographie & Code INSEE & Commune & $\approx$3\,700 lignes & Millésime INSEE $\geq$2021 \\
+  FILOSOFI & Code INSEE & Commune & $\approx$3\,700 lignes & Seuil secret stat. $>$500 hab. \\
+  Emploi-Chômage & Code INSEE & Commune & $\approx$3\,700 lignes & Source officielle Pôle Emploi \\
+  SIRENE (filtré HdF) & SIRET (14c) & Établissement & $\approx$400k lignes & Statut actif uniquement \\
+  Taux immobiliers & Région + durée & Région & $\approx$30 lignes & Fraîcheur $\leq$1 mois \\
+  \bottomrule
+\end{tabular}
+
+\subsection{Flux de données -- Architecture logique}
+
+\begin{tcolorbox}[gris]
+\begin{center}
+\textbf{Sources hétérogènes}\\
+{\small API Géo · CSV INSEE · Scraping Meilleurtaux · SIRENE Parquet · Azure SQL interne}\\[0.3em]
+$\downarrow$ \textit{Extraction (Python / PySpark Databricks)}\\[0.3em]
+\textbf{Azure Data Lake Storage Gen2 -- \texttt{adlselbrek2025}}\\
+{\small \texttt{raw/} (données brutes) $\to$ \texttt{staging/} (données nettoyées) $\to$ \texttt{curated/} (données prêtes)}\\[0.3em]
+$\downarrow$ \textit{Chargement (SQLAlchemy / pyodbc)}\\[0.3em]
+\textbf{Azure SQL Database -- \texttt{sqlelbrek-prod}}\\
+{\small Modèle relationnel normalisé (MERISE 3NF) -- tables \texttt{dim\_commune}, \texttt{stg\_*}, \texttt{fact\_*}}\\[0.3em]
+$\downarrow$ \textit{Exposition (FastAPI)}\\[0.3em]
+\textbf{API REST} $\to$ Analystes métiers · Outils BI · Exports CSV
+\end{center}
+\end{tcolorbox}
+
+\subsection{Azure Data Lake Storage Gen2 -- Organisation du stockage}
+
+L'\textbf{Azure Data Lake Storage Gen2} (ADLS Gen2) est le socle de stockage central du projet.
+Il s'agit d'un service de stockage objet hiérarchique d'Azure, conçu pour le traitement analytique
+de grands volumes de données. Par rapport à un simple stockage Blob, il ajoute la notion de
+\textbf{système de fichiers hiérarchique} (dossiers réels, permissions POSIX), ce qui le rend adapté
+aux architectures data modernes.
+
+Le compte de stockage \texttt{adlselbrek2025} est organisé en trois zones fonctionnelles (conteneurs),
+suivant le pattern \textbf{Medallion Architecture} :
+
+\begin{tabular}{L{2.5cm} L{4cm} L{7cm}}
+  \toprule
+  \textbf{Zone} & \textbf{Contenu} & \textbf{Rôle et format} \\
+  \midrule
+  \texttt{raw/} & Données brutes sources & Fichiers tels quels à l'ingestion : CSV (INSEE), JSON (API Géo), JSON (scraping), Parquet (SIRENE). Aucune transformation. Conservation à des fins de traçabilité et de rejeu. \\[0.6em]
+  \texttt{staging/} & Données intermédiaires & Données nettoyées et validées (types corrects, valeurs manquantes traitées, codes INSEE harmonisés). Format Parquet. Zone de travail avant chargement SQL. \\[0.6em]
+  \texttt{curated/} & Données prêtes à l'emploi & Données enrichies et partitionnées prêtes pour l'analyse : \texttt{curated/etablissements\_hdf\_actifs/} partitionné par \texttt{code\_departement} (02, 59, 60, 62, 80). Format Parquet compressé Snappy. \\
+  \bottomrule
+\end{tabular}
+
+\vspace{0.4em}
+\textbf{Accès et sécurité du Data Lake :}
+\begin{itemize}
+  \item Protocole \texttt{abfss://} (Azure Blob File System Secure) pour les accès depuis Databricks (PySpark).
+  \item \textbf{RBAC Azure} : rôle \textit{Storage Blob Data Contributor} pour le data engineer, \textit{Storage Blob Data Reader} pour les services consommateurs.
+  \item \textbf{Chiffrement} : chiffrement au repos (AES-256) activé par défaut sur Azure ; chiffrement en transit (TLS 1.2).
+  \item \textbf{Soft delete} activé sur les conteneurs (rétention 7 jours) pour la récupération accidentelle.
+  \item Accès depuis les scripts Python via \texttt{azure-storage-file-datalake} SDK avec \texttt{DefaultAzureCredential}.
+\end{itemize}
+
+\textbf{Exemple de structure des chemins dans le Data Lake :}
+\begin{lstlisting}[language=bash, caption=Organisation des fichiers dans l'ADLS Gen2]
+adlselbrek2025/
+  raw/
+    csv/            -> communes_hdf.csv, filosofi_2021.csv, ...
+    geo/            -> api_geo_communes.json
+    scraping/       -> taux_immo_meilleurtaux.json
+    Parquet/        -> StockEtablissement_utf8.parquet (30M lignes)
+    sql-bis/        -> dim_commune.parquet, stg_population.parquet, ...
+  curated/
+    etablissements_hdf_actifs/
+      code_departement=02/  -> part-00000.snappy.parquet
+      code_departement=59/  -> part-00000.snappy.parquet
+      code_departement=60/  -> part-00000.snappy.parquet
+      code_departement=62/  -> part-00000.snappy.parquet
+      code_departement=80/  -> part-00000.snappy.parquet
+\end{lstlisting}
+
+\subsection{Modèle de données -- Tables principales}
+
+\begin{tabular}{L{3.5cm} L{10cm}}
+  \toprule
+  \textbf{Table} & \textbf{Description et colonnes clés} \\
+  \midrule
+  \texttt{dim\_commune} & Référentiel géographique : \texttt{code\_insee}, \texttt{nom}, \texttt{code\_dept}, \texttt{population}, \texttt{surface\_km2}, \texttt{latitude}, \texttt{longitude} \\[0.4em]
+  \texttt{stg\_population} & Naissances, décès, solde naturel, solde migratoire par commune et par an \\[0.4em]
+  \texttt{stg\_filosofi} & Revenus médians, taux de pauvreté, Gini par commune \\[0.4em]
+  \texttt{stg\_emploi\_chomage} & Taux de chômage, emplois par secteur (public/privé) \\[0.4em]
+  \texttt{stg\_logement} & Résidences principales/secondaires, taux de vacance \\[0.4em]
+  \texttt{stg\_creation\_entreprises} & Créations d'entreprises par commune et secteur NAF \\[0.4em]
+  \texttt{curated.etablissements\_hdf} & Établissements SIRENE actifs HdF partitionnés par département \\[0.4em]
+  \texttt{dim\_taux\_immo} & Taux crédit immobilier par région et durée (source Meilleurtaux) \\
+  \bottomrule
+\end{tabular}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Architecture technique}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Choix technologiques et justifications}
+
+\begin{tabular}{L{3cm} L{3cm} L{7.5cm}}
+  \toprule
+  \textbf{Composant} & \textbf{Technologie} & \textbf{Justification} \\
+  \midrule
+  Extraction & Python 3.10+ & Écosystème riche (requests, pandas, beautifulsoup4) ; scripts reproductibles et versionnés \\
+  Big Data ETL & PySpark / Databricks & Traitement du fichier SIRENE ($>$30M lignes) impossible en pandas ; cluster spot pour minimiser les coûts \\
+  Stockage brut & ADLS Gen2 & Stockage hiérarchique (raw/staging/curated), format Parquet colonnaire, intégration native Azure \\
+  Base finale & Azure SQL Database & SGBDR robuste, jointures SQL optimisées, sauvegardes automatiques, compatible SQLAlchemy \\
+  Infrastructure & Terraform & Provisionnement reproductible et versionné de toute l'infra Azure (IaC) \\
+  Exposition & FastAPI & Performance élevée, documentation Swagger auto-générée, authentification par clé API \\
+  Secrets & Azure Key Vault & Aucune credential en clair dans le code ; accès RBAC \\
+  Orchestration & GitHub Actions & CI/CD intégré, planification des pipelines (cron) \\
+  \bottomrule
+\end{tabular}
+
+\subsection{Infrastructure as Code -- Terraform}
+
+L'ensemble de l'infrastructure Azure est provisionnée via \textbf{Terraform}, garantissant la
+reproductibilité, le versionnement et la destruction/recréation rapide de l'environnement.
+Les ressources déployées incluent :
+
+\begin{itemize}
+  \item \textbf{Groupe de ressources} \texttt{rg-data-hdf} (région \textit{France Central})
+  \item \textbf{ADLS Gen2} \texttt{adlselbrek2025} avec conteneurs \texttt{raw} et \texttt{curated}
+  \item \textbf{Azure SQL Server} \texttt{sqlelbrek-prod} + Database \texttt{projet\_data\_eng} (tier Basic, 5 DTU)
+  \item \textbf{Azure Key Vault} pour les secrets (chaînes de connexion, clés API)
+  \item \textbf{Workspace Databricks} (Standard tier) pour les traitements PySpark
+  \item \textbf{Azure Monitor} avec alertes sur les transactions de stockage et la disponibilité de l'API
+  \item \textbf{Azure App Service Plan} (F1 Free) pour l'hébergement de l'API FastAPI
+\end{itemize}
+
+L'infrastructure est détruite et recréée à la demande en quelques minutes via \texttt{terraform apply},
+ce qui garantit une parfaite reproductibilité de l'environnement entre les phases de développement,
+de test et de production.
+
+\subsection{Pipeline ETL -- Extrait de code}
+
+\begin{lstlisting}[language=Python, caption=Extrait -- Filtrage SIRENE Hauts-de-France (PySpark / Databricks)]
+# Lecture du fichier SIRENE brut depuis la zone raw/
+df_raw = spark.read.parquet(
+    "abfss://raw@adlselbrek2025.dfs.core.windows.net/Parquet/
+     StockEtablissement_utf8.parquet")
+
+# Filtre : etablissements actifs en Hauts-de-France (02/59/60/62/80)
+df = df_raw.filter(col("etatAdministratifEtablissement") == "A") \
+           .filter(substring(col("codeCommuneEtablissement"),1,2)
+                   .isin(["02","59","60","62","80"]))
+
+# Enrichissement : ajout departement et region
+df = df.withColumn("code_departement",
+                   substring(col("codeCommuneEtablissement"),1,2)) \
+       .withColumn("region", lit("Hauts-de-France"))
+
+# Sauvegarde partitionnee dans la zone curated/
+df.write.mode("overwrite").partitionBy("code_departement") \
+    .parquet("abfss://curated@adlselbrek2025.dfs.core.windows.net
+              /etablissements_hdf_actifs/")
+\end{lstlisting}
+
+\subsection{Conformité RGPD et éco-responsabilité}
+
+\textbf{RGPD :}
+\begin{itemize}
+  \item Données publiques agrégées à la maille commune (non personnelles en v1).
+  \item Logs API : IP hashées, rétention 90 jours.
+  \item Région Azure \textit{France Central} imposée -- résidence des données en UE.
+  \item Registre des traitements créé (Art. 30) ; AIPD planifiée pour l'intégration CRM (v2).
+  \item \textit{Privacy by design} : minimisation des données collectées, accès RBAC.
+\end{itemize}
+
+\textbf{Éco-responsabilité :}
+\begin{itemize}
+  \item Databricks en cluster \textbf{spot} (instances interruptibles) : réduction des coûts et empreinte carbone du traitement SIRENE.
+  \item Format \textbf{Parquet} : compression $\times$5 à $\times$10 vs CSV, réduction des transferts réseau.
+  \item Azure SQL Basic dimensionné au \textbf{strict minimum} du volume v1 ($<$500k lignes).
+  \item Pipeline déclenché \textbf{à la demande} (pas de polling continu) pour éviter les traitements inutiles.
+  \item Région \textit{France Central} : datacentres Microsoft avec engagement 100\,\% énergies renouvelables.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Bilan opérationnel et financier}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\subsection{Réalisations -- Indicateurs opérationnels}
+
+\begin{tabular}{L{6cm} C{2.5cm} C{2.5cm} L{2.5cm}}
+  \toprule
+  \textbf{Indicateur} & \textbf{Cible} & \textbf{Réalisé} & \textbf{Statut} \\
+  \midrule
+  Communes couvertes (HdF) & $\approx$3\,700 & 3\,709 & \textcolor{successgreen}{\textbf{Atteint}} \\
+  Indicateurs par commune & $\geq$8 & 12 & \textcolor{successgreen}{\textbf{Atteint}} \\
+  Sources intégrées & $\geq$4 & 5 & \textcolor{successgreen}{\textbf{Atteint}} \\
+  Valeurs manquantes (indicateurs clés) & $<$5\,\% & $\approx$3\,\% & \textcolor{successgreen}{\textbf{Atteint}} \\
+  Temps de réponse API (p95) & $<$2s & $\approx$0.8s & \textcolor{successgreen}{\textbf{Atteint}} \\
+  Disponibilité API & $\geq$99\,\% & 99.5\,\% & \textcolor{successgreen}{\textbf{Atteint}} \\
+  Lignes SIRENE traitées (HdF actifs) & -- & $\approx$400k & \textcolor{successgreen}{\textbf{Livré}} \\
+  Délai de livraison & 4 mois & 4 mois & \textcolor{successgreen}{\textbf{Respecté}} \\
+  \bottomrule
+\end{tabular}
+
+\subsection{Bilan financier}
+
+\begin{tabular}{L{5.5cm} C{2.5cm} C{2.5cm} L{2.5cm}}
+  \toprule
+  \textbf{Poste} & \textbf{Prévu} & \textbf{Réel} & \textbf{Écart} \\
+  \midrule
+  Azure SQL Database (4 mois) & 20€ & 18€ & -2€ \\
+  Azure Data Lake Storage Gen2 & 40€ & 35€ & -5€ \\
+  Databricks (cluster spot) & 60€ & 52€ & -8€ \\
+  Azure Key Vault + Monitor & 28€ & 25€ & -3€ \\
+  \midrule
+  \textbf{Total infrastructure} & \textbf{148€} & \textbf{130€} & \textbf{-18€} \\
+  Licences logicielles & 0€ & 0€ & = \\
+  \textbf{Total projet} & \textbf{148€} & \textbf{130€} & \textbf{-12\,\%} \\
+  \bottomrule
+\end{tabular}
+
+Le projet a été livré \textbf{sous budget} grâce au recours aux clusters spot Databricks et à
+l'utilisation du tier gratuit Azure App Service (F1) pour l'hébergement de l'API.
+
+\subsection{Gouvernance et supervision}
+
+La supervision du pipeline et des services déployés est assurée via \textbf{Azure Monitor} :
+\begin{itemize}
+  \item \textbf{Alertes} sur les transactions de stockage ADLS Gen2 (seuil : $>$500 transactions/heure).
+  \item \textbf{Alertes} sur la capacité de stockage (seuil : $>$80\,\% de la capacité provisionnée).
+  \item \textbf{Logs d'accès} à l'API FastAPI : journalisés dans Azure Application Insights.
+  \item \textbf{Dashboard Azure Monitor} : visualisation en temps réel des métriques clés.
+\end{itemize}
+
+La \textbf{gouvernance des données} repose sur :
+\begin{itemize}
+  \item Un \textbf{dictionnaire de données} maintenu dans le dépôt Git (\texttt{docs/architecture.md}).
+  \item Des \textbf{tests de qualité} embarqués dans le pipeline (contrôle des types, des plages de valeurs, de la complétude).
+  \item Un \textbf{RBAC} Azure granulaire : accès en lecture seule pour les analystes, accès complet pour le data engineer.
+  \item Des \textbf{tags Azure} sur toutes les ressources : \texttt{projet=data-hdf}, \texttt{env=prod}, \texttt{owner=elbrek}.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Retour d'expérience -- Problèmes et arbitrages}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{longtable}{L{3cm} L{5.5cm} L{5cm}}
+  \toprule
+  \textbf{Problème rencontré} & \textbf{Description} & \textbf{Arbitrage / Solution} \\
+  \midrule
+  \endfirsthead
+  \toprule
+  \textbf{Problème} & \textbf{Description} & \textbf{Arbitrage / Solution} \\
+  \midrule
+  \endhead
+  \bottomrule
+  \endfoot
+
+  \textbf{Secret stat. INSEE} & Les communes $<$500 hab. n'ont pas de données FILOSOFI publiées (secret statistique). & Valeurs manquantes imputées par la médiane départementale ; flag \texttt{secret\_stat=true} ajouté pour traçabilité. \\[0.5em]
+
+  \textbf{Fusions de communes} & Les codes INSEE évoluent lors de fusions (communes nouvelles). Certains codes du CSV INSEE ne correspondaient plus à l'API Géo. & Ajout d'une table de correspondance \texttt{dim\_commune\_historique} ; jointure sur le code INSEE le plus récent. \\[0.5em]
+
+  \textbf{Volume SIRENE} & Le fichier SIRENE brut dépasse 30M de lignes -- pandas insuffisant (OOM). & Migration vers PySpark sur Databricks ; filtrage dès la lecture (pushdown) ; partitionnement par département. \\[0.5em]
+
+  \textbf{Scraping Meilleurtaux} & Structure HTML de la page modifiée en cours de projet, cassant le parser. & Basculement vers l'interception des requêtes AJAX (JSON natif), plus robuste que le parsing HTML. \\[0.5em]
+
+  \textbf{Authentification Azure} & Gestion des credentials Azure entre environnement local et CI/CD GitHub Actions. & Utilisation de \texttt{DefaultAzureCredential} (SDK Azure) + secrets GitHub Actions pour le CI/CD ; aucun mot de passe en dur. \\[0.5em]
+
+  \textbf{Périmètre CRM} & Demande en cours de projet d'intégrer les données clients internes (DCP). & Repoussé en v2 après AIPD ; la v1 reste 100\,\% données publiques non-personnelles. \\
+
+\end{longtable}
+
+\textbf{Leçons apprises :}
+\begin{itemize}
+  \item Anticiper les limites de pandas dès la conception pour les sources volumineuses ($>$1M lignes).
+  \item Documenter les codes INSEE historiques : les fusions de communes sont une source de bugs silencieux.
+  \item Préférer les API officielles au scraping HTML quand elles existent -- plus stables et fiables.
+  \item Impliquer l'équipe conformité dès le cadrage, pas en fin de projet.
+\end{itemize}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\section{Bulletin de veille technique}
+% ─────────────────────────────────────────────────────────────────────────────
+
+\begin{tcolorbox}[orange, title={Thème : Le format Apache Parquet et l'architecture Data Lakehouse}]
+\textit{En quoi le format Parquet transforme-t-il le traitement des données massives, et pourquoi
+l'architecture Data Lakehouse s'impose-t-elle comme standard dans les projets data modernes ?}
+\end{tcolorbox}
+
+\subsection{Qu'est-ce que le format Apache Parquet ?}
+
+Apache Parquet est un format de fichier \textbf{colonnaire} open-source conçu pour le traitement
+analytique de grands volumes de données. Contrairement aux formats ligne par ligne (CSV, JSON),
+Parquet organise les données colonne par colonne, ce qui permet :
+
+\begin{itemize}
+  \item De ne lire que les colonnes nécessaires à une requête (\textbf{projection pushdown}) -- gain I/O majeur.
+  \item D'appliquer une \textbf{compression efficace} par colonne (Snappy, Gzip, ZSTD) : compression ×5 à ×10 vs CSV.
+  \item D'intégrer nativement le \textbf{schéma des données} (typage fort), évitant les erreurs d'inférence.
+  \item D'être lu nativement par l'ensemble des moteurs data modernes : Spark, DuckDB, Pandas, Polars, BigQuery, Redshift.
+\end{itemize}
+
+\textbf{Application dans ce projet :} Le fichier SIRENE brut de 30+ millions de lignes (environ 4 Go en CSV)
+est réduit à $\approx$400k lignes après filtrage HdF et stocké en Parquet, passant à environ 80 Mo --
+soit une réduction de 98\,\% du volume, avec un temps de lecture Spark divisé par 8.
+
+\subsection{L'architecture Data Lakehouse}
+
+Le \textbf{Data Lakehouse} est une architecture hybride combinant les avantages du \textbf{Data Lake}
+(stockage brut, pas de schéma imposé, coût faible) et du \textbf{Data Warehouse} (requêtes SQL
+rapides, données structurées, transactions ACID).
+
+\begin{tabular}{L{4cm} L{4cm} L{5.5cm}}
+  \toprule
+  & \textbf{Data Lake} & \textbf{Data Lakehouse} \\
+  \midrule
+  Format & Brut (CSV, JSON, images) & Parquet + Delta Lake / Iceberg \\
+  Requêtes SQL & Limitées & Performantes (moteur SQL direct) \\
+  Transactions ACID & Non & Oui \\
+  Gouvernance & Faible & Forte (catalog, RBAC) \\
+  Coût stockage & Faible & Faible \\
+  \bottomrule
+\end{tabular}
+
+\vspace{0.3em}
+
+Ce projet implémente une architecture \textbf{Lakehouse simplifiée} sur Azure avec les zones
+\texttt{raw/} (données brutes), \texttt{staging/} (données nettoyées) et \texttt{curated/}
+(données prêtes à l'emploi) dans Azure Data Lake Storage Gen2, alimentant ensuite Azure SQL Database
+pour les requêtes analytiques finales.
+
+\subsection{Tendances et recommandations}
+
+\textbf{Tendances observées (2024-2025) :}
+\begin{itemize}
+  \item \textbf{Delta Lake} (Databricks) et \textbf{Apache Iceberg} (open standard) ajoutent les transactions ACID et le voyage dans le temps (\textit{time travel}) sur les fichiers Parquet -- adoption croissante en production.
+  \item \textbf{DuckDB} permet d'interroger directement des fichiers Parquet avec SQL depuis un ordinateur portable, sans cluster -- idéal pour les projets data de taille intermédiaire.
+  \item \textbf{Polars} (Python) remplace progressivement pandas pour les traitements Parquet : 5 à 50× plus rapide grâce à son moteur Rust et son évaluation lazy.
+\end{itemize}
+
+\textbf{Recommandations pour la v2 du projet :}
+\begin{itemize}
+  \item Migrer les zones \texttt{curated/} vers \textbf{Delta Lake} pour bénéficier des transactions ACID et de la gestion des mises à jour incrémentales (évite de re-traiter tout le fichier SIRENE chaque mois).
+  \item Adopter \textbf{Microsoft Purview} comme catalogue de données pour documenter et gouverner l'ensemble des assets de données (sources, tables, colonnes, propriétaires, classifications RGPD).
+  \item Mettre en place un \textbf{pipeline CI/CD} complet sur GitHub Actions pour automatiser les tests de qualité des données (Great Expectations) à chaque ingestion.
+\end{itemize}
+
+\end{document}
